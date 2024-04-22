@@ -146,5 +146,5 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
         return full_response
 
     except Exception as e:
-        mz_utils.Utils.print_log(f"Error in auto_prompt_text: {e}")
-        return ""
+        # mz_utils.Utils.print_log(f"Error in auto_prompt_text: {e}")
+        raise e
