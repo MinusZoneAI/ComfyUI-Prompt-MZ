@@ -121,12 +121,12 @@ class MZ_LLama3CLIPTextEncode:
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
-    def encode(self, text, llama_cpp_model, style_presets, clip=None, download_source=None, seed=0, n_gpu_layers=40):
+    def encode(self, text, llama_cpp_model, style_presets, clip=None, download_source=None, seed=0, n_gpu_layers=40, options={}):
         importlib.reload(mz_llama3)
 
         llama_cpp_model = llama_cpp_model.replace("[downloaded]", "")
 
-        text = mz_llama3.query_beautify_prompt_text(llama_cpp_model, n_gpu_layers, text, style_presets, download_source,) 
+        text = mz_llama3.query_beautify_prompt_text(llama_cpp_model, n_gpu_layers, text, style_presets, download_source, options) 
         conditionings = None
         if clip is not None:
             tokens = clip.tokenize(text)
