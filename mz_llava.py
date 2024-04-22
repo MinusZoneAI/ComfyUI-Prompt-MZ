@@ -96,6 +96,8 @@ def image_interrogator(model_name, mmproj_name, n_gpu_layers, image, resolution,
         n_gpu_layers=n_gpu_layers,
         image=image,
     )
- 
+    
+
+    mz_llama_cpp.freed_gpu_memory(model_file=model_file)
     return response
         

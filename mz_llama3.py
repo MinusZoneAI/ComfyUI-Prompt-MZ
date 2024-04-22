@@ -91,6 +91,8 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
             max_tokens=2048,
         ) 
         
+        mz_llama_cpp.freed_gpu_memory(model_file=model_file)
+        
         
         response = json.loads(response_json)
         

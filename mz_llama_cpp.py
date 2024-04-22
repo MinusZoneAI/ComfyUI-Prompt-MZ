@@ -68,16 +68,33 @@ def check_llama_cpp_requirements():
 
 
 
+def freed_gpu_memory(model_file):
+    check_llama_cpp_requirements() 
+    import llama_cpp
+    
+    model_and_opt = mz_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
+
+    if model_and_opt is None:
+        return 0
+    
+    model = model_and_opt.get("model")
+
+    llama_cpp.llama_free(model.ctx())
+
+    mz_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", None)
+
 def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[], options={}):
     print(f"Find local model file: {model_file}")
+    init_opts = ["n_ctx", "logits_all", "chat_format",]
 
     check_llama_cpp_requirements()
 
     from llama_cpp import Llama
 
+
+
     model_and_opt = mz_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
     
-    init_opts = ["n_ctx"]
     # compared
     is_opts_changed = False
 
