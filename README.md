@@ -1,7 +1,7 @@
 ![Image Description](res/1.png)
 
 # ComfyUI-Prompt-MZ
-Use llama.cpp to help generate some nodes for prompt word related work
+Use llama.cpp to assist in generating some nodes related to prompt words, including beautifying prompt words and image recognition similar to clip-interrogator
  
 
 ## Installation
