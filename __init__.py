@@ -74,6 +74,7 @@ class MZ_LLama3CLIPTextEncode:
                 ),
                 "text": ("STRING", {"multiline": True,}), 
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
             },
             "optional": {
                 "clip": ("CLIP", ),
@@ -82,12 +83,12 @@ class MZ_LLama3CLIPTextEncode:
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
-    def encode(self, text, llama3_model, style_presets, clip=None, download_source=None, seed=0):
+    def encode(self, text, llama3_model, style_presets, clip=None, download_source=None, seed=0, n_gpu_layers=40):
         importlib.reload(mz_llama3)
 
         llama3_model = llama3_model.replace("[downloaded]", "")
 
-        text = mz_llama3.query_beautify_prompt_text(llama3_model, text, style_presets, download_source,) 
+        text = mz_llama3.query_beautify_prompt_text(llama3_model, n_gpu_layers, text, style_presets, download_source,) 
         conditionings = None
         if clip is not None:
             tokens = clip.tokenize(text)
@@ -145,6 +146,7 @@ class MZ_LLavaImageInterrogator:
             "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
             "prefix" : ("STRING", {"default": "(masterpiece)", "multiline": True, }),
             "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
         },
         "optional": {
             "clip": ("CLIP",),
@@ -152,7 +154,7 @@ class MZ_LLavaImageInterrogator:
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
-    def interrogate(self, llava_model, mmproj_model, image, resolution, prefix, download_source=None, seed=0, clip=None):
+    def interrogate(self, llava_model, mmproj_model, image, resolution, prefix, download_source=None, seed=0, clip=None, n_gpu_layers=40):
         importlib.reload(mz_llava)
 
         llava_model = llava_model.replace("[downloaded]", "")
@@ -166,6 +168,7 @@ class MZ_LLavaImageInterrogator:
         response = mz_llava.image_interrogator(
             llava_model,
             mmproj_model,
+            n_gpu_layers,
             image_pil, 
             resolution, 
             download_source,
@@ -180,125 +183,7 @@ class MZ_LLavaImageInterrogator:
 NODE_CLASS_MAPPINGS["MZ_LLavaImageInterrogator"] = MZ_LLavaImageInterrogator
 NODE_DISPLAY_NAME_MAPPINGS["MZ_LLavaImageInterrogator"] = f"{AUTHOR_NAME} - LLavaImageInterrogator"
 
-
-qwen_models = [
-    "Qwen1.5-1.8B-Chat-GPTQ-Int4",
-    "Qwen1.5-7B-Chat-GPTQ-Int4",
-    "Qwen1.5-14B-Chat-GPTQ-Int4",
-    "Qwen1.5-32B-Chat-GPTQ-Int4",
-    "Qwen1.5-72B-Chat-GPTQ-Int4",
-]
-
-class MZ_QWenOptionalArgs:
-    model_id = ""
-    download_source = ""
-    customize_prompt = ""
-
-class MZ_QWenOptional:
-    @classmethod
-    def INPUT_TYPES(s):
-        # qwen_model
-        return {
-            "required": {
-                "model_id": ("STRING", {"default": ""}),  
-                "customize_prompt": ("STRING", {"multiline": True, "default": ""}),
-            },
-        }
-    RETURN_TYPES = ("MZ_QWenOptionalArgs",)
-    RETURN_NAMES = ("qwen_optional",)
-    FUNCTION = "optional"
-    CATEGORY = CATEGORY_NAME
-    def optional(self, model_id, download_source, customize_prompt=""):
-        result = MZ_QWenOptionalArgs()
-        result.model_id = model_id
-        result.download_source = download_source
-        result.customize_prompt = customize_prompt
-        return result
-
-# NODE_CLASS_MAPPINGS["MZ_QWenOptional"] = MZ_QWenOptional
-# NODE_DISPLAY_NAME_MAPPINGS["MZ_QWenOptional"] = f"{AUTHOR_NAME} - QWenOptionalParameter"
-
-        
-
-class MZ_QWenCLIPTextEncode:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "qwen_model": (qwen_models, {"default": "Qwen1.5-1.8B-Chat-GPTQ-Int4"}),
-                "download_source": (
-                    ["none", "modelscope", "https://hf-mirror.com",],
-                    {"default": "none"}
-                ),
-                "text": ("STRING", {"multiline": True,}), 
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-            },
-            "optional": {
-                "clip": ("CLIP", ),
-                "qwen_optional": ("MZ_QWenOptionalArgs",),
-            },
-        }
-    RETURN_TYPES = ("STRING", "CONDITIONING",)
-    FUNCTION = "encode"
-    CATEGORY = CATEGORY_NAME
-    def encode(self, clip, text, qwen_model, download_source=None, seed=0, qwen_optional=None):
-        importlib.reload(mz_qwen)
-        text = mz_qwen.auto_prompt_text(qwen_model, text, download_source, qwen_optional=qwen_optional,) 
-        conditionings = None
-        if clip is not None:
-            tokens = clip.tokenize(text)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
-            conditionings = [[cond, {"pooled_output": pooled}]]
  
-        return (text, conditionings)
-    
-
-# NODE_CLASS_MAPPINGS["MZ_QWenCLIPTextEncode"] = MZ_QWenCLIPTextEncode
-# NODE_DISPLAY_NAME_MAPPINGS["MZ_QWenCLIPTextEncode"] = f"{AUTHOR_NAME} - QWenCLIPTextEncode"
-
-
-
-class MZ_QWenImageInterrogator:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {"required": {
-            "image":  ("IMAGE",),
-            "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
-            "prefix" : ("STRING", {"default": "(masterpiece)", "multiline": True, }),
-            "download_source": (
-                ["none", "modelscope", "https://hf-mirror.com",],
-                {"default": "none"}
-            ),
-            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-        },
-        "optional": {
-            "clip": ("CLIP",),
-            "qwen_optional": ("MZ_QWenOptionalArgs",),
-        }}
-    RETURN_TYPES = ("STRING", "CONDITIONING",)
-    FUNCTION = "interrogate"
-    CATEGORY = CATEGORY_NAME
-    def interrogate(self, image, resolution, prefix, download_source=None, seed=0, clip=None, qwen_optional=None):
-        importlib.reload(mz_qwen)
-        prefix = Utils.prompt_zh_to_en(prefix)
-        if not prefix.endswith(","):
-            prefix += ","
-        response = prefix + mz_qwen.auto_image_to_text(image, resolution, download_source, qwen_optional=qwen_optional,)
-        
-        conditionings = None
-        if clip is not None:
-            tokens = clip.tokenize(response)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
-            conditionings = [[cond, {"pooled_output": pooled}]]
-        return (response, conditionings)
-
-# NODE_CLASS_MAPPINGS["MZ_QWenImageInterrogator"] = MZ_QWenImageInterrogator
-# NODE_DISPLAY_NAME_MAPPINGS["MZ_QWenImageInterrogator"] = f"{AUTHOR_NAME} - QWenImageInterrogator"
-
-
-
-
-
 class MZ_LLamaCPPInterrogator:
     @classmethod
     def INPUT_TYPES(s):
@@ -308,15 +193,17 @@ class MZ_LLamaCPPInterrogator:
                 "use_system": ([True, False], {"default": True}),
                 "system": ("STRING", {"multiline": True, "default": "You are a helpful assistant."}),
                 "prompt": ("STRING", {"multiline": True,}),
+                "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
             },
         }
     RETURN_TYPES = ("STRING",)
     FUNCTION = "simple_interrogator"
     CATEGORY = CATEGORY_NAME
-    def simple_interrogator(self, model_file, prompt, use_system=True, system="You are a helpful assistant."):
+    def simple_interrogator(self, model_file, prompt, use_system=True, system="You are a helpful assistant.", n_gpu_layers=40):
         importlib.reload(mz_llama_cpp)
         result = mz_llama_cpp.llama_cpp_simple_interrogator(
             model_file, 
+            n_gpu_layers=n_gpu_layers,
             use_system=use_system,
             system=system,
             question=prompt,

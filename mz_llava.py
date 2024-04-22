@@ -45,7 +45,7 @@ def get_exist_model(model_name):
     return None
 
 
-def image_interrogator(model_name, mmproj_name, image, resolution, download_source=None):  
+def image_interrogator(model_name, mmproj_name, n_gpu_layers, image, resolution, download_source=None):  
     image = mz_utils.Utils.resize_max(image, resolution, resolution)
     model_file = get_exist_model(model_name)
     mmproj_file = get_exist_model(mmproj_name)
@@ -93,6 +93,7 @@ def image_interrogator(model_name, mmproj_name, image, resolution, download_sour
     response = mz_llama_cpp.llava_cpp_simple_interrogator(
         model_file=model_file,
         mmproj_file=mmproj_file,
+        n_gpu_layers=n_gpu_layers,
         image=image,
     )
  

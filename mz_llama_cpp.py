@@ -70,7 +70,7 @@ def check_llama_cpp_requirements():
 
 
 
-def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
+def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[], options={}):
     print(f"Find local model file: {model_file}")
 
     check_llama_cpp_requirements()
@@ -97,6 +97,7 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
 
         model = Llama(
             model_path=model_file, 
+            n_gpu_layers=n_gpu_layers,
             n_ctx=options.get("n_ctx", 1024),
             logits_all=options.get("logits_all", False),
             chat_handler=chat_handler,
@@ -158,7 +159,7 @@ def get_schema_array(item_type="string"):
 
 
 
-def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=None, question="", schema={}, max_tokens=1024, temperature=0.8):
+def llama_cpp_simple_interrogator_to_json(model_file, n_gpu_layers, use_system=True, system=None, question="", schema={}, max_tokens=1024, temperature=0.8):
 
     if system is None:
         system = ""
@@ -201,14 +202,14 @@ def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=No
     } 
 
 
-    return llama_cpp_messages(model_file, None, messages, options={
+    return llama_cpp_messages(model_file, n_gpu_layers, None, messages, options={
         "response_format": response_format,
         "chat_format":"chatml",
         "temperature": temperature,
-        "max_tokens": max_tokens,
+        "max_tokens": max_tokens,  
     })
     
-def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, question=""):
+def llama_cpp_simple_interrogator(model_file, n_gpu_layers, use_system=True, system=None, question=""):
     if system is None:
         system = ""
         messages = [
@@ -243,17 +244,17 @@ def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, ques
                 "content": question
             },
         ]
-    return llama_cpp_messages(model_file, None, messages)
+    return llama_cpp_messages(model_file, n_gpu_layers, None, messages)
 
 
-def llava_cpp_messages(model_file, chat_handler, messages, options={}):
+def llava_cpp_messages(model_file, n_gpu_layers, chat_handler, messages, options={}):
     options["logits_all"] = True
     options["n_ctx"] = max(2048, options.get("n_ctx", 2048)) 
-    return llama_cpp_messages(model_file, chat_handler, messages, options)
+    return llama_cpp_messages(model_file, n_gpu_layers, chat_handler, messages, options)
 
  
 
-def llava_cpp_simple_interrogator(model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please.", image=None):
+def llava_cpp_simple_interrogator(model_file, mmproj_file, n_gpu_layers, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please.", image=None):
     check_llama_cpp_requirements()
 
     content = []
@@ -268,7 +269,7 @@ def llava_cpp_simple_interrogator(model_file, mmproj_file, system="You are an as
     if mmproj_file is not None:
         chat_handler = Llava15ChatHandler(clip_model_path=mmproj_file)
 
-    return llava_cpp_messages(model_file, chat_handler, [
+    return llava_cpp_messages(model_file, n_gpu_layers, chat_handler, [
         {
             "role": "system",
             "content": system,

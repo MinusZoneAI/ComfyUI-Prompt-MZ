@@ -36,7 +36,7 @@ def get_style_presets():
         "illustration",  
     ]
 
-def query_beautify_prompt_text(model_name, text, style_presets, download_source=None, ):     
+def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, download_source=None):     
     import mz_prompts
     importlib.reload(mz_prompts)
     importlib.reload(mz_llama_cpp)
@@ -83,6 +83,7 @@ def query_beautify_prompt_text(model_name, text, style_presets, download_source=
 
         response_json = mz_llama_cpp.llama_cpp_simple_interrogator_to_json(
             model_file=model_file,
+            n_gpu_layers=n_gpu_layers,
             system=mz_prompts.Beautify_Prompt,
             question=f"IDEA: {style_presets},{text}",
             schema=schema,
