@@ -12,7 +12,8 @@ except ImportError:
 class LlamaCppOptions:
     value = {
         "max_tokens": 2048,
-        "temperature": 0.8,
+        "temperature": 1.6,
+        "n_ctx": 2048,
     }
 
 def check_llama_cpp_requirements(): 
