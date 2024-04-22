@@ -185,7 +185,7 @@ class MZ_LLavaImageInterrogator:
             ),
             "image":  ("IMAGE",),
             "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
-            "prefix" : ("STRING", {"default": "(masterpiece)", "multiline": True, }),
+            # "prefix" : ("STRING", {"default": "(masterpiece)", "multiline": True, }),
             "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
         },
@@ -196,15 +196,15 @@ class MZ_LLavaImageInterrogator:
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
-    def interrogate(self, llama_cpp_model, mmproj_model, image, resolution, prefix, download_source=None, seed=0, clip=None, n_gpu_layers=40, llama_cpp_options=None):
+    def interrogate(self, llama_cpp_model, mmproj_model, image, resolution, download_source=None, seed=0, clip=None, n_gpu_layers=40, llama_cpp_options=None):
         importlib.reload(mz_llava)
 
         llama_cpp_model = llama_cpp_model.replace("[downloaded]", "")
         mmproj_model = mmproj_model.replace("[downloaded]", "")
 
-        prefix = Utils.prompt_zh_to_en(prefix)
-        if not prefix.endswith(","):
-            prefix += ","
+        # prefix = Utils.prompt_zh_to_en(prefix)
+        # if not prefix.endswith(","):
+        #     prefix += ","
 
         image_pil = Utils.tensor2pil(image)
 
