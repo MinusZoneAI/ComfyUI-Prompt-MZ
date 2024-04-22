@@ -115,17 +115,20 @@ class MZ_LLama3CLIPTextEncode:
             },
             "optional": {
                 "clip": ("CLIP", ),
-                "options": ("LLamaCPPOptions", ),
+                "llama_cpp_options": ("LLamaCPPOptions", ),
             },
         }
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
-    def encode(self, text, llama_cpp_model, style_presets, clip=None, download_source=None, seed=0, n_gpu_layers=40, options={}):
+    def encode(self, text, llama_cpp_model, style_presets, clip=None, download_source=None, seed=0, n_gpu_layers=40, llama_cpp_options=None):
         importlib.reload(mz_llama3)
 
         llama_cpp_model = llama_cpp_model.replace("[downloaded]", "")
 
+        options = {}
+        if llama_cpp_options is not None:
+            options = llama_cpp_options.value
         text = mz_llama3.query_beautify_prompt_text(llama_cpp_model, n_gpu_layers, text, style_presets, download_source, options) 
         conditionings = None
         if clip is not None:
@@ -188,12 +191,12 @@ class MZ_LLavaImageInterrogator:
         },
         "optional": {
             "clip": ("CLIP", ),
-            "options": ("LLamaCPPOptions", ),
+            "llama_cpp_options": ("LLamaCPPOptions", ),
         }}
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
-    def interrogate(self, llama_cpp_model, mmproj_model, image, resolution, prefix, download_source=None, seed=0, clip=None, n_gpu_layers=40, options={}):
+    def interrogate(self, llama_cpp_model, mmproj_model, image, resolution, prefix, download_source=None, seed=0, clip=None, n_gpu_layers=40, llama_cpp_options=None):
         importlib.reload(mz_llava)
 
         llama_cpp_model = llama_cpp_model.replace("[downloaded]", "")
@@ -204,6 +207,12 @@ class MZ_LLavaImageInterrogator:
             prefix += ","
 
         image_pil = Utils.tensor2pil(image)
+
+
+        options = {}
+        if llama_cpp_options is not None:
+            options = llama_cpp_options.value
+
         response = mz_llava.image_interrogator(
             llama_cpp_model,
             mmproj_model,
