@@ -86,6 +86,9 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
             if model_and_opt.get("options").get(opt) != options.get(opt):
                 is_opts_changed = True
                 break
+        
+        if model_and_opt.get("n_gpu_layers") != n_gpu_layers:
+            is_opts_changed = True
 
     if model_and_opt is None or is_opts_changed:
         print("llama_cpp: loading model...")
@@ -105,6 +108,7 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
         model_and_opt = {
             "model": model,
             "options": options,
+            "n_gpu_layers": n_gpu_layers,
         }
         mz_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", model_and_opt)
 
