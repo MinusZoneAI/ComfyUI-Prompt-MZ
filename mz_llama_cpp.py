@@ -157,7 +157,6 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
         return ""
     
     result = choices[0].get("message", {}).get("content", "")
-
     return result
 
 def get_schema_base_type(t):
@@ -234,7 +233,9 @@ def llama_cpp_simple_interrogator_to_json(model_file, n_gpu_layers, use_system=T
     if options.get("max_tokens", None) is None:
         options["max_tokens"] = 2048
 
-    return llama_cpp_messages(model_file, n_gpu_layers, None, messages, options=options)
+    result = llama_cpp_messages(model_file, n_gpu_layers, None, messages, options=options)
+    result = result.replace("\n", " ")
+    return result
     
 def llama_cpp_simple_interrogator(model_file, n_gpu_layers, use_system=True, system=None, question="", options={}):
     if options is None:
@@ -273,7 +274,7 @@ def llama_cpp_simple_interrogator(model_file, n_gpu_layers, use_system=True, sys
                 "content": question
             },
         ]
-    return llama_cpp_messages(model_file, n_gpu_layers, None, messages, options={})
+    return llama_cpp_messages(model_file, n_gpu_layers, None, messages, options=options)
 
 
 def llava_cpp_messages(model_file, n_gpu_layers, chat_handler, messages, options={}):
