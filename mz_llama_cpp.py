@@ -79,7 +79,7 @@ def freed_gpu_memory(model_file):
     
     model = model_and_opt.get("model")
 
-    llama_cpp.llama_free(model.ctx())
+    llama_cpp.llama_free(model.ctx)
 
     mz_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", None)
 
