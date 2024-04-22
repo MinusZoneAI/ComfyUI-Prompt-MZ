@@ -90,11 +90,9 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
             temperature=1.6,
             max_tokens=2048,
         ) 
-        
-        mz_llama_cpp.freed_gpu_memory(model_file=model_file)
-        
-        
+        mz_utils.Utils.print_log(f"response_json: {response_json}")
         response = json.loads(response_json)
+        mz_llama_cpp.freed_gpu_memory(model_file=model_file)
         
 
         full_responses = []
