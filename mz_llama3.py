@@ -105,17 +105,24 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
             full_responses.append(f"({response['main_color_word']})")
         if response["camera_angle_word"] != "":
             full_responses.append(f"({response['camera_angle_word']})")
+        
+        
+        response["style_words"] = [x for x in response["style_words"] if x != ""]
         if len(response["style_words"]) > 0:
-            response["style_words"] = [x for x in response["style_words"] if x != ""]
             full_responses.append(f"({', '.join(response['style_words'])})")
+
+
+        response["subject_words"] = [x for x in response["subject_words"] if x != ""]
         if len(response["subject_words"]) > 0:
-            response["subject_words"] = [x for x in response["subject_words"] if x != ""]
             full_responses.append(f"({', '.join(response['subject_words'])})")
+
+        response["light_words"] = [x for x in response["light_words"] if x != ""]
         if len(response["light_words"]) > 0:
-            response["light_words"] = [x for x in response["light_words"] if x != ""]
             full_responses.append(f"({', '.join(response['light_words'])})")
+
+
+        response["environment_words"] = [x for x in response["environment_words"] if x != ""]
         if len(response["environment_words"]) > 0:
-            response["environment_words"] = [x for x in response["environment_words"] if x != ""]
             full_responses.append(f"({', '.join(response['environment_words'])})")
 
         full_response = ", ".join(full_responses)
