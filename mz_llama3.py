@@ -36,7 +36,9 @@ def get_style_presets():
         "illustration",  
     ]
 
-def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, download_source=None):     
+def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, download_source=None, options={}):     
+    if options is None:
+        options = {}
     import mz_prompts
     importlib.reload(mz_prompts)
     importlib.reload(mz_llama_cpp)
@@ -81,14 +83,17 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
             ]
         )
 
+        options["max_tokens"] = options.get("max_tokens", 2048)
+        options["temperature"] = options.get("temperature", 1.6)
+
+
         response_json = mz_llama_cpp.llama_cpp_simple_interrogator_to_json(
             model_file=model_file,
             n_gpu_layers=n_gpu_layers,
             system=mz_prompts.Beautify_Prompt,
             question=f"IDEA: {style_presets},{text}",
             schema=schema,
-            temperature=1.6,
-            max_tokens=2048,
+            options=options,
         ) 
         mz_utils.Utils.print_log(f"response_json: {response_json}")
         response = json.loads(response_json)

@@ -50,6 +50,43 @@ llama3_models = [
     "Meta-Llama-3-8B-Instruct.Q8_0.gguf",
 ]
 
+class MZ_LLamaCPPOptions:
+    @classmethod
+    def INPUT_TYPES(s):
+        opt = mz_llama_cpp.LlamaCppOptions()
+        value = opt.value
+        result = {}
+
+        for key in value:
+            if type(value[key]) == bool:
+                result[key] = ([True, False], {"default": value[key]})
+            elif type(value[key]) == int:
+                result[key] = ("INT", {"default": value[key]})
+            elif type(value[key]) == float:
+                result[key] = ("FLOAT", {"default": value[key]})
+            elif type(value[key]) == str:
+                result[key] = ("STRING", {"default": value[key]})
+            else:
+                raise Exception(f"Unknown type: {type(value[key])}")
+        
+        return {
+            "required": result,
+        }
+    
+
+    RETURN_TYPES = ("LLamaCPPOptions",)
+    FUNCTION = "create"
+    CATEGORY = CATEGORY_NAME
+    def create(self, **kwargs):
+        importlib.reload(mz_llama_cpp)
+        opt = mz_llama_cpp.LlamaCppOptions()
+        for key in kwargs:
+            opt.value[key] = kwargs[key]
+        return (opt,)
+
+NODE_CLASS_MAPPINGS["MZ_LLamaCPPOptions"] = MZ_LLamaCPPOptions
+NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPOptions"] = f"{AUTHOR_NAME} - LLamaCPPOptions"
+
 class MZ_LLama3CLIPTextEncode:
     @classmethod
     def INPUT_TYPES(s):
@@ -64,7 +101,7 @@ class MZ_LLama3CLIPTextEncode:
 
         return {
             "required": {
-                "llama3_model": (m_llama3_models, {"default": m_llama3_models[0]}),
+                "llama_cpp_model": (m_llama3_models, {"default": m_llama3_models[0]}),
                 "download_source": (
                     ["none", "modelscope", "hf-mirror.com",],
                     {"default": "none"}
@@ -78,17 +115,18 @@ class MZ_LLama3CLIPTextEncode:
             },
             "optional": {
                 "clip": ("CLIP", ),
+                "options": ("LLamaCPPOptions", ),
             },
         }
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
-    def encode(self, text, llama3_model, style_presets, clip=None, download_source=None, seed=0, n_gpu_layers=40):
+    def encode(self, text, llama_cpp_model, style_presets, clip=None, download_source=None, seed=0, n_gpu_layers=40):
         importlib.reload(mz_llama3)
 
-        llama3_model = llama3_model.replace("[downloaded]", "")
+        llama_cpp_model = llama_cpp_model.replace("[downloaded]", "")
 
-        text = mz_llama3.query_beautify_prompt_text(llama3_model, n_gpu_layers, text, style_presets, download_source,) 
+        text = mz_llama3.query_beautify_prompt_text(llama_cpp_model, n_gpu_layers, text, style_presets, download_source,) 
         conditionings = None
         if clip is not None:
             tokens = clip.tokenize(text)
@@ -132,7 +170,7 @@ class MZ_LLavaImageInterrogator:
 
 
         return {"required": {
-            "llava_model": (m_llava_models, {"default": m_llava_models[0]}),
+            "llama_cpp_model": (m_llava_models, {"default": m_llava_models[0]}),
             "mmproj_model": (m_llava_mmproj_models, {"default": m_llava_mmproj_models[0]}),
             "download_source": (
                 [
@@ -149,15 +187,16 @@ class MZ_LLavaImageInterrogator:
             "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
         },
         "optional": {
-            "clip": ("CLIP",),
+            "clip": ("CLIP", ),
+            "options": ("LLamaCPPOptions", ),
         }}
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
-    def interrogate(self, llava_model, mmproj_model, image, resolution, prefix, download_source=None, seed=0, clip=None, n_gpu_layers=40):
+    def interrogate(self, llama_cpp_model, mmproj_model, image, resolution, prefix, download_source=None, seed=0, clip=None, n_gpu_layers=40, options={}):
         importlib.reload(mz_llava)
 
-        llava_model = llava_model.replace("[downloaded]", "")
+        llama_cpp_model = llama_cpp_model.replace("[downloaded]", "")
         mmproj_model = mmproj_model.replace("[downloaded]", "")
 
         prefix = Utils.prompt_zh_to_en(prefix)
@@ -166,12 +205,13 @@ class MZ_LLavaImageInterrogator:
 
         image_pil = Utils.tensor2pil(image)
         response = mz_llava.image_interrogator(
-            llava_model,
+            llama_cpp_model,
             mmproj_model,
             n_gpu_layers,
             image_pil, 
             resolution, 
             download_source,
+            options,
         ) 
         conditionings = None
         if clip is not None:

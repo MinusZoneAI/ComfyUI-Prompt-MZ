@@ -8,6 +8,13 @@ try:
 except ImportError:
     pass
   
+
+class LlamaCppOptions:
+    value = {
+        "max_tokens": 2048,
+        "temperature": 0.8,
+    }
+
 def check_llama_cpp_requirements(): 
     last_version = "0.2.63"
     try:
@@ -84,6 +91,8 @@ def freed_gpu_memory(model_file):
     mz_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", None)
 
 def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[], options={}):
+    if options is None:
+        options = {}
     print(f"Find local model file: {model_file}")
     init_opts = ["n_ctx", "logits_all", "chat_format",]
 
@@ -176,7 +185,7 @@ def get_schema_array(item_type="string"):
 
 
 
-def llama_cpp_simple_interrogator_to_json(model_file, n_gpu_layers, use_system=True, system=None, question="", schema={}, max_tokens=1024, temperature=0.8):
+def llama_cpp_simple_interrogator_to_json(model_file, n_gpu_layers, use_system=True, system=None, question="", schema={}, options={}):
     if system is None:
         system = ""
         messages = [
@@ -218,14 +227,18 @@ def llama_cpp_simple_interrogator_to_json(model_file, n_gpu_layers, use_system=T
     } 
 
 
-    return llama_cpp_messages(model_file, n_gpu_layers, None, messages, options={
-        "response_format": response_format,
-        "chat_format":"chatml",
-        "temperature": temperature,
-        "max_tokens": max_tokens,  
-    })
+    options["response_format"] = response_format
+    options["chat_format"] = "chatml"
+    if options.get("temperature", None) is None:
+        options["temperature"] = 0.8
+    if options.get("max_tokens", None) is None:
+        options["max_tokens"] = 2048
+
+    return llama_cpp_messages(model_file, n_gpu_layers, None, messages, options=options)
     
-def llama_cpp_simple_interrogator(model_file, n_gpu_layers, use_system=True, system=None, question=""):
+def llama_cpp_simple_interrogator(model_file, n_gpu_layers, use_system=True, system=None, question="", options={}):
+    if options is None:
+        options = {}
     if system is None:
         system = ""
         messages = [
@@ -260,17 +273,25 @@ def llama_cpp_simple_interrogator(model_file, n_gpu_layers, use_system=True, sys
                 "content": question
             },
         ]
-    return llama_cpp_messages(model_file, n_gpu_layers, None, messages)
+    return llama_cpp_messages(model_file, n_gpu_layers, None, messages, options={})
 
 
 def llava_cpp_messages(model_file, n_gpu_layers, chat_handler, messages, options={}):
+    if options is None:
+        options = {}
     options["logits_all"] = True
     options["n_ctx"] = max(2048, options.get("n_ctx", 2048)) 
     return llama_cpp_messages(model_file, n_gpu_layers, chat_handler, messages, options)
 
  
 
-def llava_cpp_simple_interrogator(model_file, mmproj_file, n_gpu_layers, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please.", image=None):
+def llava_cpp_simple_interrogator(
+        model_file, mmproj_file, n_gpu_layers, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please.", 
+        image=None, options={}):
+    if options is None:
+        options = {}
+
+
     check_llama_cpp_requirements()
 
     content = []
@@ -294,7 +315,7 @@ def llava_cpp_simple_interrogator(model_file, mmproj_file, n_gpu_layers, system=
             "role": "user",
             "content": content,
         }, 
-    ])
+    ], options=options)
 
 
 
