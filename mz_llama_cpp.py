@@ -53,8 +53,6 @@ def check_llama_cpp_requirements():
         if cuda_version == "cpu":
             wheel_url = f"https://github.com/abetlen/llama-cpp-python/releases/download/v{last_version}/{wheel_name}"
         else:
-
-
             wheel_url = f"https://github.com/abetlen/llama-cpp-python/releases/download/v{last_version}-{cuda_version}/{wheel_name}"
 
         print(f"pip install {wheel_url}")
@@ -160,7 +158,6 @@ def get_schema_array(item_type="string"):
 
 
 def llama_cpp_simple_interrogator_to_json(model_file, n_gpu_layers, use_system=True, system=None, question="", schema={}, max_tokens=1024, temperature=0.8):
-
     if system is None:
         system = ""
         messages = [
