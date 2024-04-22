@@ -539,12 +539,12 @@ class Utils:
 
 modelscope_models_map = {
     "llama3":{
-        "Meta-Llama-3-8B-Instruct-Q4_K_M.gguf": {
+        "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf": {
             "url": "https://modelscope.cn/api/v1/models/LLM-Research/Meta-Llama-3-8B-Instruct-GGUF/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
             "output": "modelscope_models/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
             "SHA256": "57b26bac2df51111affec600077708de06133b8f49e697723672657c7cbe3b9c",
         },
-        "Meta-Llama-3-8B-Instruct-Q5_K_M.gguf": {
+        "Meta-Llama-3-8B-Instruct.Q5_K_M.gguf": {
             "url": "https://modelscope.cn/api/v1/models/LLM-Research/Meta-Llama-3-8B-Instruct-GGUF/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-Q5_K_M.gguf",
             "output": "modelscope_models/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct-Q5_K_M.gguf",
             "SHA256": "1ea28c7c5f2a1ada991c40940a59bd42668939feeafb125d0764c38ae815b2a3",
