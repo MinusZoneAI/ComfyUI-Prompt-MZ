@@ -4,7 +4,7 @@ import subprocess
 import sys
 import torch
 try:
-    import mz_utils
+    import mz_prompt_utils
 except ImportError:
     pass
   
@@ -79,7 +79,7 @@ def check_llama_cpp_requirements():
 def freed_gpu_memory(model_file):
     check_llama_cpp_requirements()  
     
-    model_and_opt = mz_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
+    model_and_opt = mz_prompt_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
 
     if model_and_opt is None:
         return 0
@@ -89,7 +89,7 @@ def freed_gpu_memory(model_file):
     del model
     torch.cuda.empty_cache()
 
-    mz_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", None)
+    mz_prompt_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", None)
 
 def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[], options={}):
     if options is None:
@@ -101,7 +101,7 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
 
     from llama_cpp import Llama
 
-    model_and_opt = mz_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
+    model_and_opt = mz_prompt_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
     
     # compared
     is_opts_changed = False
@@ -135,23 +135,23 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
             "options": options,
             "n_gpu_layers": n_gpu_layers,
         }
-        mz_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", model_and_opt)
+        mz_prompt_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", model_and_opt)
 
     
     model = model_and_opt.get("model")
 
 
     response_format = options.get("response_format", None)
-    mz_utils.Utils.print_log(f"======================================================LLAMA_CPP======================================================")
+    mz_prompt_utils.Utils.print_log(f"======================================================LLAMA_CPP======================================================")
     # mz_utils.Utils.print_log("llama_cpp messages:", messages) 
-    mz_utils.Utils.print_log("llama_cpp response_format:", response_format) 
+    mz_prompt_utils.Utils.print_log("llama_cpp response_format:", response_format) 
     output = model.create_chat_completion(
         messages=messages,
         max_tokens=options.get("max_tokens", None),
         response_format=response_format,
         temperature=options.get("temperature", 0.8),
     )
-    mz_utils.Utils.print_log(f"LLAMA_CPP: \n{output}")
+    mz_prompt_utils.Utils.print_log(f"LLAMA_CPP: \n{output}")
     choices = output.get("choices", [])
     # mz_utils.Utils.print_log(f"LLAMA_CPP choices: \n{choices}")
     if len(choices) == 0:
@@ -298,7 +298,7 @@ def llava_cpp_simple_interrogator(
 
     content = []
     if image is not None:
-        data_uri = mz_utils.Utils.pil_image_to_base64(image)
+        data_uri = mz_prompt_utils.Utils.pil_image_to_base64(image)
         content.append({"type": "image_url", "image_url": {"url": data_uri}})
         
     content.append({"type" : "text", "text": question})

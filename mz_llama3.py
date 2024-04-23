@@ -1,5 +1,5 @@
 import json
-import mz_utils  
+import mz_prompt_utils  
 import mz_llama_cpp
 
 import importlib
@@ -7,7 +7,7 @@ import importlib
 
 
 def get_exist_model(model_name):
-    modelscope_model_path = mz_utils.Utils.modelscope_download_model(
+    modelscope_model_path = mz_prompt_utils.Utils.modelscope_download_model(
         model_type="llama3",
         model_name=model_name,
         only_get_path=True,
@@ -17,7 +17,7 @@ def get_exist_model(model_name):
         return modelscope_model_path
 
     model_url = f"https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/{model_name}"
-    hf_model_path = mz_utils.Utils.hf_download_model(model_url, only_get_path=True)
+    hf_model_path = mz_prompt_utils.Utils.hf_download_model(model_url, only_get_path=True)
     if hf_model_path is not None:
         return hf_model_path
 
@@ -50,7 +50,7 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
         
         if model_file is None:
             if download_source == "modelscope":
-                model_file = mz_utils.Utils.modelscope_download_model(
+                model_file = mz_prompt_utils.Utils.modelscope_download_model(
                     model_type="llama3",
                     model_name=model_name,
                 )
@@ -58,7 +58,7 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
                 model_url = f"https://huggingface.co/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/{model_name}"
                 if download_source == "hf-mirror.com":
                     model_url = f"https://hf-mirror.com/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/{model_name}"
-                model_file = mz_utils.Utils.hf_download_model(model_url)
+                model_file = mz_prompt_utils.Utils.hf_download_model(model_url)
                 
         schema = mz_llama_cpp.get_schema_obj(
             keys_type={
@@ -95,7 +95,7 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
             schema=schema,
             options=options,
         ) 
-        mz_utils.Utils.print_log(f"response_json: {response_json}")
+        mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
         response = json.loads(response_json)
         mz_llama_cpp.freed_gpu_memory(model_file=model_file)
         
@@ -148,7 +148,7 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
         while full_response.find(", ,") != -1:
             full_response = full_response.replace(", ,", ",")
 
-        full_response = mz_utils.Utils.prompt_zh_to_en(full_response) 
+        full_response = mz_prompt_utils.Utils.prompt_zh_to_en(full_response) 
 
 
         style_presets_prompt_text = style_presets_prompt.get(style_presets, "")

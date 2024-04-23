@@ -2,7 +2,7 @@
 
 import os
 import sys
-from .mz_utils import Utils  
+from .mz_prompt_utils import Utils  
 from nodes import MAX_RESOLUTION
 import comfy.utils 
 import shutil

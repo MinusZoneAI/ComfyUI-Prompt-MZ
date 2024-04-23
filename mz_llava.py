@@ -1,6 +1,6 @@
 import json
 import os
-import mz_utils  
+import mz_prompt_utils  
 import mz_llama_cpp
 
 import importlib
@@ -16,7 +16,7 @@ huggingface_models_map = {
 
 
 def get_exist_model(model_name):
-    modelscope_model_path = mz_utils.Utils.modelscope_download_model(
+    modelscope_model_path = mz_prompt_utils.Utils.modelscope_download_model(
         model_type="llava",
         model_name=model_name,
         only_get_path=True,
@@ -36,7 +36,7 @@ def get_exist_model(model_name):
     model_url = f"https://hf-mirror.com/{author}/{model_names[0]}/resolve/main/{model_names[1]}"
 
     
-    hf_model_path = mz_utils.Utils.hf_download_model(model_url, only_get_path=True)
+    hf_model_path = mz_prompt_utils.Utils.hf_download_model(model_url, only_get_path=True)
 
     if hf_model_path is not None:
         return hf_model_path
@@ -48,19 +48,19 @@ def get_exist_model(model_name):
 def image_interrogator(model_name, mmproj_name, n_gpu_layers, image, resolution, download_source=None, options={}):  
     if options is None:
         options = {}
-    image = mz_utils.Utils.resize_max(image, resolution, resolution)
+    image = mz_prompt_utils.Utils.resize_max(image, resolution, resolution)
     model_file = get_exist_model(model_name)
     mmproj_file = get_exist_model(mmproj_name)
     
     if model_file is None or mmproj_file is None:
         if download_source == "modelscope":
             if model_file is None:
-                model_file = mz_utils.Utils.modelscope_download_model(
+                model_file = mz_prompt_utils.Utils.modelscope_download_model(
                     model_type="llava",
                     model_name=model_name,
                 )
             if mmproj_file is None:
-                mmproj_file = mz_utils.Utils.modelscope_download_model(
+                mmproj_file = mz_prompt_utils.Utils.modelscope_download_model(
                     model_type="llava",
                     model_name=mmproj_name,
                 )
@@ -79,7 +79,7 @@ def image_interrogator(model_name, mmproj_name, n_gpu_layers, image, resolution,
 
 
             if model_file is None:
-                model_file = mz_utils.Utils.hf_download_model(model_url)
+                model_file = mz_prompt_utils.Utils.hf_download_model(model_url)
 
             mmproj_name = mmproj_name.split("?")[0]
             mmproj_names = mmproj_name.split("/")
@@ -89,7 +89,7 @@ def image_interrogator(model_name, mmproj_name, n_gpu_layers, image, resolution,
                 mmproj_url = f"https://huggingface.co/{author}/{mmproj_names[0]}/resolve/main/{mmproj_names[1]}"
 
             if mmproj_file is None:
-                mmproj_file = mz_utils.Utils.hf_download_model(mmproj_url)
+                mmproj_file = mz_prompt_utils.Utils.hf_download_model(mmproj_url)
 
 
     response = mz_llama_cpp.llava_cpp_simple_interrogator(
