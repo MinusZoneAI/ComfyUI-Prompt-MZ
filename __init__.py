@@ -231,6 +231,51 @@ class MZ_LLavaImageInterrogator:
 
 NODE_CLASS_MAPPINGS["MZ_LLavaImageInterrogator"] = MZ_LLavaImageInterrogator
 NODE_DISPLAY_NAME_MAPPINGS["MZ_LLavaImageInterrogator"] = f"{AUTHOR_NAME} - LLavaImageInterrogator"
+class MZ_BaseLLavaImageInterrogator:
+    @classmethod
+    def INPUT_TYPES(s):  
+        return {"required": {
+            "llama_cpp_model": ("STRING", {"default": ""}),
+            "mmproj_model": ("STRING", {"default": ""}), 
+            "image":  ("IMAGE",),
+            "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}), 
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
+        },
+        "optional": {
+            "clip": ("CLIP", ),
+            "llama_cpp_options": ("LLamaCPPOptions", ),
+        }}
+    RETURN_TYPES = ("STRING", "CONDITIONING",)
+    FUNCTION = "interrogate"
+    CATEGORY = CATEGORY_NAME
+    def interrogate(self, llama_cpp_model, mmproj_model, image, resolution, seed=0, clip=None, n_gpu_layers=40, llama_cpp_options=None):
+        importlib.reload(mz_llava)
+ 
+        image_pil = Utils.tensor2pil(image)
+
+
+        options = {}
+        if llama_cpp_options is not None:
+            options = llama_cpp_options.value
+
+        response = mz_llava.base_image_interrogator(
+            llama_cpp_model,
+            mmproj_model,
+            n_gpu_layers,
+            image_pil, 
+            resolution,  
+            options,
+        ) 
+        conditionings = None
+        if clip is not None:
+            tokens = clip.tokenize(response)
+            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
+            conditionings = [[cond, {"pooled_output": pooled}]]
+        return (response, conditionings)
+
+NODE_CLASS_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = MZ_BaseLLavaImageInterrogator
+NODE_DISPLAY_NAME_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = f"{AUTHOR_NAME} - BaseLLavaImageInterrogator"
 
  
 class MZ_LLamaCPPInterrogator:

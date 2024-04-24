@@ -11,6 +11,7 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 ## Nodes
 + LLama3CLIPTextEncode 
 + LLavaImageInterrogator 
-
++ BaseLLamaCPPCLIPTextEncode (You can directly pass in the model path)
++ BaseLLavaImageInterrogator (You can directly pass in the model path)
 
 

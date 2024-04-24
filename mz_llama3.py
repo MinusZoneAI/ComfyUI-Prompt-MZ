@@ -33,13 +33,7 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
 
 
 
-    try: 
-            
-        model_file = None 
-        if options.get("customize_model_file", None) is not None:
-            model_file = options.get("customize_model_file")
-
-
+    try:  
         model_file = get_exist_model(model_name)
         
         if model_file is None:
