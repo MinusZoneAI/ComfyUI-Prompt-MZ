@@ -23,18 +23,6 @@ def get_exist_model(model_name):
 
     return None
 
-high_quality_prompt = "((high quality:1.4), (best quality:1.4), (masterpiece:1.4), (8K resolution), (2k wallpaper))"
-style_presets_prompt = {
-    "high_quality": high_quality_prompt,
-    "photography": f"{high_quality_prompt}, (RAW photo, best quality), (realistic, photo-realistic:1.2), (bokeh, cinematic shot, dynamic composition, incredibly detailed, sharpen, details, intricate detail, professional lighting, film lighting, 35mm, anamorphic, lightroom, cinematography, bokeh, lens flare, film grain, HDR10, 8K)",
-    "illustration": f"{high_quality_prompt}, ((detailed matte painting, intricate detail, splash screen, complementary colors), (detailed),(intricate details),illustration,an extremely delicate and beautiful,ultra-detailed,highres,extremely detailed)",
-}
-def get_style_presets():
-    return [
-        "high_quality",
-        "photography",
-        "illustration",  
-    ]
 
 def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, download_source=None, options={}):     
     if options is None:
@@ -46,6 +34,12 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
 
 
     try: 
+            
+        model_file = None 
+        if options.get("customize_model_file", None) is not None:
+            model_file = options.get("customize_model_file")
+
+
         model_file = get_exist_model(model_name)
         
         if model_file is None:
@@ -151,7 +145,7 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
         full_response = mz_prompt_utils.Utils.prompt_zh_to_en(full_response) 
 
 
-        style_presets_prompt_text = style_presets_prompt.get(style_presets, "")
+        style_presets_prompt_text = mz_llama_cpp.style_presets_prompt.get(style_presets, "")
         full_response = f"{style_presets_prompt_text}, {full_response}"
         return full_response
 

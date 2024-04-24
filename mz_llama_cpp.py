@@ -1,3 +1,5 @@
+import importlib
+import json
 import os 
 import shutil
 import subprocess
@@ -124,7 +126,7 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
         model = Llama(
             model_path=model_file, 
             n_gpu_layers=n_gpu_layers,
-            n_ctx=options.get("n_ctx", 1024),
+            n_ctx=options.get("n_ctx", 2048),
             logits_all=options.get("logits_all", False),
             chat_handler=chat_handler,
             chat_format=options.get("chat_format", None),
@@ -321,6 +323,127 @@ def llava_cpp_simple_interrogator(
 
 
 
+high_quality_prompt = "((high quality:1.4), (best quality:1.4), (masterpiece:1.4), (8K resolution), (2k wallpaper))"
+style_presets_prompt = {
+    "high_quality": high_quality_prompt,
+    "photography": f"{high_quality_prompt}, (RAW photo, best quality), (realistic, photo-realistic:1.2), (bokeh, cinematic shot, dynamic composition, incredibly detailed, sharpen, details, intricate detail, professional lighting, film lighting, 35mm, anamorphic, lightroom, cinematography, bokeh, lens flare, film grain, HDR10, 8K)",
+    "illustration": f"{high_quality_prompt}, ((detailed matte painting, intricate detail, splash screen, complementary colors), (detailed),(intricate details),illustration,an extremely delicate and beautiful,ultra-detailed,highres,extremely detailed)",
+}
+def get_style_presets():
+    return [
+        "high_quality",
+        "photography",
+        "illustration",  
+    ]
+
+
+def base_query_beautify_prompt_text(model_file, n_gpu_layers, text, style_presets, options={}):     
+    if options is None:
+        options = {}
+    import mz_prompts
+    importlib.reload(mz_prompts) 
+
+
+    try: 
+        schema = get_schema_obj(
+            keys_type={
+                "description": get_schema_base_type("string"),
+                "long_prompt": get_schema_base_type("string"),
+                "main_color_word": get_schema_base_type("string"),
+                "camera_angle_word": get_schema_base_type("string"),
+                "style_words": get_schema_array("string"),
+                "subject_words": get_schema_array("string"),
+                "light_words": get_schema_array("string"),
+                "environment_words": get_schema_array("string"),
+            },
+            required=[
+                "description",
+                "long_prompt",
+                "main_color_word",
+                "camera_angle_word",
+                "style_words",
+                "subject_words",
+                "light_words",
+                "environment_words",
+            ]
+        )
+
+        options["max_tokens"] = options.get("max_tokens", 2048)
+        options["temperature"] = options.get("temperature", 1.6)
+
+
+        response_json = llama_cpp_simple_interrogator_to_json(
+            model_file=model_file,
+            n_gpu_layers=n_gpu_layers,
+            system=mz_prompts.Beautify_Prompt,
+            question=f"IDEA: {style_presets},{text}",
+            schema=schema,
+            options=options,
+        ) 
+        mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
+        response = json.loads(response_json)
+        freed_gpu_memory(model_file=model_file)
+        
+
+        full_responses = []
+
+        if response["description"] != "":
+            full_responses.append(f"({response['description']})")
+        if response["long_prompt"] != "":
+            full_responses.append(f"({response['long_prompt']})")
+        if response["main_color_word"] != "":
+            full_responses.append(f"({response['main_color_word']})")
+        if response["camera_angle_word"] != "":
+            full_responses.append(f"({response['camera_angle_word']})")
+        
+        
+        response["style_words"] = [x for x in response["style_words"] if x != ""]
+        if len(response["style_words"]) > 0:
+            full_responses.append(f"({', '.join(response['style_words'])})")
+
+
+        response["subject_words"] = [x for x in response["subject_words"] if x != ""]
+        if len(response["subject_words"]) > 0:
+            full_responses.append(f"({', '.join(response['subject_words'])})")
+
+        response["light_words"] = [x for x in response["light_words"] if x != ""]
+        if len(response["light_words"]) > 0:
+            full_responses.append(f"({', '.join(response['light_words'])})")
+
+
+        response["environment_words"] = [x for x in response["environment_words"] if x != ""]
+        if len(response["environment_words"]) > 0:
+            full_responses.append(f"({', '.join(response['environment_words'])})")
+
+        full_response = ", ".join(full_responses)
+
+
+        
+        # 去除换行
+        while full_response.find("\n") != -1:
+            full_response = full_response.replace("\n", " ")
+
+        # 句号换成逗号
+        while full_response.find(".") != -1:
+            full_response = full_response.replace(".", ",")
+
+        # 去除多余逗号
+        while full_response.find(",,") != -1:
+            full_response = full_response.replace(",,", ",")
+        while full_response.find(", ,") != -1:
+            full_response = full_response.replace(", ,", ",")
+
+        full_response = mz_prompt_utils.Utils.prompt_zh_to_en(full_response) 
+
+
+        style_presets_prompt_text = style_presets_prompt.get(style_presets, "")
+        full_response = f"{style_presets_prompt_text}, {full_response}"
+        return full_response
+
+    except Exception as e:
+        freed_gpu_memory(model_file=model_file)
+        # mz_utils.Utils.print_log(f"Error in auto_prompt_text: {e}")
+        raise e
 
 
 if __name__ == "__main__":

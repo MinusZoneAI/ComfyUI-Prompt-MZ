@@ -96,8 +96,8 @@ class MZ_LLama3CLIPTextEncode:
                 m_llama3_models[i] += "[downloaded]"
 
         
-        importlib.reload(mz_llama3)
-        style_presets = mz_llama3.get_style_presets()
+        importlib.reload(mz_llama_cpp)
+        style_presets = mz_llama_cpp.get_style_presets()
 
         return {
             "required": {
@@ -261,3 +261,49 @@ class MZ_LLamaCPPInterrogator:
     
 NODE_CLASS_MAPPINGS["MZ_LLamaCPPInterrogator"] = MZ_LLamaCPPInterrogator 
 NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPInterrogator"] = f"{AUTHOR_NAME} - LLamaCPP simple interrogator"
+
+
+
+
+class MZ_BaseLLamaCPPCLIPTextEncode:
+    @classmethod
+    def INPUT_TYPES(s):
+        
+        importlib.reload(mz_llama_cpp)
+        style_presets = mz_llama_cpp.get_style_presets()
+        return {
+            "required": {
+                "llama_cpp_model": ("STRING", {"default": "", "placeholder": "model_path"}),
+                "style_presets": (
+                    style_presets, {"default": style_presets[0]}
+                ),
+                "text": ("STRING", {"multiline": True,}), 
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
+            },
+            "optional": {
+                "clip": ("CLIP", ),
+                "llama_cpp_options": ("LLamaCPPOptions", ),
+            },
+        }
+    RETURN_TYPES = ("STRING", "CONDITIONING",)
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+    def encode(self, text, llama_cpp_model, style_presets, clip=None, seed=0, n_gpu_layers=40, llama_cpp_options=None):
+        importlib.reload(mz_llama3)
+ 
+
+        options = {}
+        if llama_cpp_options is not None:
+            options = llama_cpp_options.value
+        text = mz_llama_cpp.base_query_beautify_prompt_text(llama_cpp_model, n_gpu_layers, text, style_presets, options) 
+        conditionings = None
+        if clip is not None:
+            tokens = clip.tokenize(text)
+            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
+            conditionings = [[cond, {"pooled_output": pooled}]]
+ 
+        return (text, conditionings)
+    
+NODE_CLASS_MAPPINGS["MZ_BaseLLamaCPPCLIPTextEncode"] = MZ_BaseLLamaCPPCLIPTextEncode
+NODE_DISPLAY_NAME_MAPPINGS["MZ_BaseLLamaCPPCLIPTextEncode"] = f"{AUTHOR_NAME} - BaseLLamaCPPCLIPTextEncode"

@@ -49,8 +49,21 @@ def image_interrogator(model_name, mmproj_name, n_gpu_layers, image, resolution,
     if options is None:
         options = {}
     image = mz_prompt_utils.Utils.resize_max(image, resolution, resolution)
-    model_file = get_exist_model(model_name)
-    mmproj_file = get_exist_model(mmproj_name)
+
+    model_file = None
+    mmproj_file = None
+    if options.get("customize_model_file", None) is not None:
+        model_file = options.get("customize_model_file")
+
+    if options.get("customize_mmproj_file", None) is not None:
+        mmproj_file = options.get("customize_mmproj_file")
+
+
+
+    if model_file is None:
+        model_file = get_exist_model(model_name)
+    if mmproj_file is None:
+        mmproj_file = get_exist_model(mmproj_name) 
     
     if model_file is None or mmproj_file is None:
         if download_source == "modelscope":
