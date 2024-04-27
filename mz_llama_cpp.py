@@ -4,6 +4,7 @@ import os
 import shutil
 import subprocess
 import sys
+import llama_cpp
 import torch
 try:
     import mz_prompt_utils
@@ -11,11 +12,31 @@ except ImportError:
     pass
   
 
-class LlamaCppOptions:
-    value = {
-        "max_tokens": 2048,
-        "temperature": 1.6,
+def LlamaCppOptions():
+    return {
         "n_ctx": 2048,
+        "n_batch": 2048,
+        "n_threads": 0,
+        "n_threads_batch": 0,
+        "split_mode":["LLAMA_SPLIT_MODE_NONE","LLAMA_SPLIT_MODE_LAYER", "LLAMA_SPLIT_MODE_ROW",],
+        "main_gpu": 0,
+        "n_gpu_layers": -1,
+
+        
+        "max_tokens": 4096,
+        "temperature": 1.6,
+        "top_p": 0.95,
+        "min_p": 0.05,
+        "typical_p": 1.0,
+        "stop": "",
+        "frequency_penalty": 0.0,
+        "presence_penalty": 0.0,
+        "repeat_penalty": 1.1,
+        "top_k": 50,
+        "tfs_z": 1.0,
+        "mirostat_mode": ["none", "mirostat", "mirostat_v2"],
+        "mirostat_tau": 5.0,
+        "mirostat_eta": 0.1,
     }
 
 def check_llama_cpp_requirements(): 
@@ -93,11 +114,11 @@ def freed_gpu_memory(model_file):
 
     mz_prompt_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", None)
 
-def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[], options={}):
+def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     if options is None:
         options = {}
     print(f"Find local model file: {model_file}")
-    init_opts = ["n_ctx", "logits_all", "chat_format",]
+    init_opts = ["n_ctx", "logits_all", "chat_format", "n_gpu_layers"]
 
     check_llama_cpp_requirements()
 
@@ -113,9 +134,7 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
             if model_and_opt.get("options").get(opt) != options.get(opt):
                 is_opts_changed = True
                 break
-        
-        if model_and_opt.get("n_gpu_layers") != n_gpu_layers:
-            is_opts_changed = True
+         
 
     if model_and_opt is None or is_opts_changed:
         print("llama_cpp: loading model...")
@@ -123,19 +142,32 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
         if os.environ.get("MZ_DEV", None) is not None:
             verbose = True
 
+        
+        split_mode_int = llama_cpp.LLAMA_SPLIT_MODE_LAYER
+        if options.get("split_mode", "LLAMA_SPLIT_MODE_LAYER") == "LLAMA_SPLIT_MODE_ROW":
+            split_mode_int = llama_cpp.LLAMA_SPLIT_MODE_ROW
+        elif options.get("split_mode", "LLAMA_SPLIT_MODE_LAYER") == "LLAMA_SPLIT_MODE_NONE":
+            split_mode_int = llama_cpp.LLAMA_SPLIT_MODE_NONE
+        
+        
         model = Llama(
             model_path=model_file, 
-            n_gpu_layers=n_gpu_layers,
+            n_gpu_layers=options.get("n_gpu_layers", -1),
             n_ctx=options.get("n_ctx", 2048),
+            n_batch=options.get("n_batch", 2048),
+            n_threads=options.get("n_threads", 0) if options.get("n_threads", 0) > 0 else None,
+            n_threads_batch=options.get("n_threads_batch", 0) if options.get("n_threads_batch", 0) > 0 else None,
+            main_gpu=options.get("main_gpu", 0),
+            split_mode=split_mode_int,
             logits_all=options.get("logits_all", False),
             chat_handler=chat_handler,
             chat_format=options.get("chat_format", None),
+            seed=options.get("seed", -1),
             verbose=verbose,
         )   
         model_and_opt = {
             "model": model,
             "options": options,
-            "n_gpu_layers": n_gpu_layers,
         }
         mz_prompt_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", model_and_opt)
 
@@ -147,11 +179,47 @@ def llama_cpp_messages(model_file, n_gpu_layers, chat_handler=None, messages=[],
     mz_prompt_utils.Utils.print_log(f"======================================================LLAMA_CPP======================================================")
     # mz_utils.Utils.print_log("llama_cpp messages:", messages) 
     mz_prompt_utils.Utils.print_log("llama_cpp response_format:", response_format) 
+
+
+     
+    stop = options.get("stop", "")
+    if stop == "":
+        stop = []
+    else:
+        # 所有转译序列
+        escape_sequence = {
+            "\\n": "\n",
+            "\\t": "\t",
+            "\\r": "\r",
+            "\\b": "\b",
+            "\\f": "\f",
+        }
+        for key, value in escape_sequence.items():
+            stop = stop.replace(key, value)
+        stop = stop.split(",")
+    
+    mirostat_mode = 0
+    if options.get("mirostat_mode", "none") == "mirostat":
+        mirostat_mode = 1
+    elif options.get("mirostat_mode", "none") == "mirostat_v2":
+        mirostat_mode = 2
     output = model.create_chat_completion(
         messages=messages,
-        max_tokens=options.get("max_tokens", None),
         response_format=response_format,
-        temperature=options.get("temperature", 0.8),
+        max_tokens=options.get("max_tokens", 4096),
+        temperature=options.get("temperature", 1.6),
+        top_p=options.get("top_p", 0.95),
+        min_p=options.get("min_p", 0.05),
+        typical_p=options.get("typical_p", 1.0),
+        stop=stop,
+        frequency_penalty=options.get("frequency_penalty", 0.0),
+        presence_penalty=options.get("presence_penalty", 0.0),
+        repeat_penalty=options.get("repeat_penalty", 1.1),
+        top_k=options.get("top_k", 50),
+        tfs_z=options.get("tfs_z", 1.0),
+        mirostat_mode=mirostat_mode,
+        mirostat_tau=options.get("mirostat_tau", 5.0),
+        mirostat_eta=options.get("mirostat_eta", 0.1),
     )
     mz_prompt_utils.Utils.print_log(f"LLAMA_CPP: \n{output}")
     choices = output.get("choices", [])
@@ -170,6 +238,8 @@ def get_schema_base_type(t):
 def get_schema_obj(keys_type={}, required=[]):
     item = {}
     for key, value in keys_type.items():
+        if type(value) == str:
+            value = get_schema_base_type(value)
         item[key] = value
     return {
         "type": "object",
@@ -187,7 +257,7 @@ def get_schema_array(item_type="string"):
 
 
 
-def llama_cpp_simple_interrogator_to_json(model_file, n_gpu_layers, use_system=True, system=None, question="", schema={}, options={}):
+def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=None, question="", schema={}, options={}):
     if system is None:
         system = ""
         messages = [
@@ -230,17 +300,13 @@ def llama_cpp_simple_interrogator_to_json(model_file, n_gpu_layers, use_system=T
 
 
     options["response_format"] = response_format
-    options["chat_format"] = "chatml"
-    if options.get("temperature", None) is None:
-        options["temperature"] = 0.8
-    if options.get("max_tokens", None) is None:
-        options["max_tokens"] = 2048
+    options["chat_format"] = "chatml" 
 
-    result = llama_cpp_messages(model_file, n_gpu_layers, None, messages, options=options)
+    result = llama_cpp_messages(model_file, None, messages, options=options)
     result = result.replace("\n", " ")
     return result
     
-def llama_cpp_simple_interrogator(model_file, n_gpu_layers, use_system=True, system=None, question="", options={}):
+def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, question="", options={}):
     if options is None:
         options = {}
     if system is None:
@@ -277,20 +343,20 @@ def llama_cpp_simple_interrogator(model_file, n_gpu_layers, use_system=True, sys
                 "content": question
             },
         ]
-    return llama_cpp_messages(model_file, n_gpu_layers, None, messages, options=options)
+    return llama_cpp_messages(model_file, None, messages, options=options)
 
 
-def llava_cpp_messages(model_file, n_gpu_layers, chat_handler, messages, options={}):
+def llava_cpp_messages(model_file, chat_handler, messages, options={}):
     if options is None:
         options = {}
     options["logits_all"] = True
     options["n_ctx"] = max(2048, options.get("n_ctx", 2048)) 
-    return llama_cpp_messages(model_file, n_gpu_layers, chat_handler, messages, options)
+    return llama_cpp_messages(model_file, chat_handler, messages, options)
 
  
 
 def llava_cpp_simple_interrogator(
-        model_file, mmproj_file, n_gpu_layers, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please.", 
+        model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please.", 
         image=None, options={}):
     if options is None:
         options = {}
@@ -310,7 +376,7 @@ def llava_cpp_simple_interrogator(
     if mmproj_file is not None:
         chat_handler = Llava15ChatHandler(clip_model_path=mmproj_file)
 
-    return llava_cpp_messages(model_file, n_gpu_layers, chat_handler, [
+    return llava_cpp_messages(model_file, chat_handler, [
         {
             "role": "system",
             "content": system,
@@ -322,24 +388,49 @@ def llava_cpp_simple_interrogator(
     ], options=options)
 
 
+def llava_cpp_simple_interrogator_to_json(
+        model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please\nuse json format for output:", 
+        image=None, schema={}, options={}):
+    
+    response_format = {
+        "type": "json_object",
+        "schema": schema,
+    } 
+    options["response_format"] = response_format
+    options["chat_format"] = "chatml" 
+
+    result = llava_cpp_simple_interrogator(
+        model_file, mmproj_file, system=system, question=question, image=image, options=options)
+    return result
+
 
 high_quality_prompt = "((high quality:1.4), (best quality:1.4), (masterpiece:1.4), (8K resolution), (2k wallpaper))"
 style_presets_prompt = {
+    "none": "",
     "high_quality": high_quality_prompt,
     "photography": f"{high_quality_prompt}, (RAW photo, best quality), (realistic, photo-realistic:1.2), (bokeh, cinematic shot, dynamic composition, incredibly detailed, sharpen, details, intricate detail, professional lighting, film lighting, 35mm, anamorphic, lightroom, cinematography, bokeh, lens flare, film grain, HDR10, 8K)",
     "illustration": f"{high_quality_prompt}, ((detailed matte painting, intricate detail, splash screen, complementary colors), (detailed),(intricate details),illustration,an extremely delicate and beautiful,ultra-detailed,highres,extremely detailed)",
 }
 def get_style_presets():
     return [
+        "none",
         "high_quality",
         "photography",
         "illustration",  
     ]
 
 
-def base_query_beautify_prompt_text(model_file, n_gpu_layers, text, style_presets, options={}):     
-    if options is None:
-        options = {}
+def base_query_beautify_prompt_text(args_dict):     
+    model_file = args_dict.get("llama_cpp_model", "")  
+
+    text = args_dict.get("text", "")
+    style_presets = args_dict.get("style_presets", "")
+    options = args_dict.get("llama_cpp_options", {})
+    keep_device = args_dict.get("keep_device", False)
+    seed = args_dict.get("seed", -1) 
+    options["seed"] = seed
+
+
     import mz_prompts
     importlib.reload(mz_prompts) 
 
@@ -367,22 +458,21 @@ def base_query_beautify_prompt_text(model_file, n_gpu_layers, text, style_preset
                 "environment_words",
             ]
         )
-
-        options["max_tokens"] = options.get("max_tokens", 2048)
-        options["temperature"] = options.get("temperature", 1.6)
-
-
+ 
+        question = f"IDEA: {style_presets},{text}"
+        if style_presets == "none":
+            question = f"IDEA: {text}"
         response_json = llama_cpp_simple_interrogator_to_json(
-            model_file=model_file,
-            n_gpu_layers=n_gpu_layers,
-            system=mz_prompts.Beautify_Prompt,
-            question=f"IDEA: {style_presets},{text}",
+            model_file=model_file, 
+            system=mz_prompts.Beautify_Prompt + mz_prompts.Long_prompt + "\n",
+            question=question,
             schema=schema,
             options=options,
         ) 
         mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
         response = json.loads(response_json)
-        freed_gpu_memory(model_file=model_file)
+        if keep_device is False:
+            freed_gpu_memory(model_file=model_file)
         
 
         full_responses = []
@@ -437,7 +527,10 @@ def base_query_beautify_prompt_text(model_file, n_gpu_layers, text, style_preset
 
 
         style_presets_prompt_text = style_presets_prompt.get(style_presets, "")
-        full_response = f"{style_presets_prompt_text}, {full_response}"
+
+        if style_presets_prompt_text != "":
+            full_response = f"{style_presets_prompt_text}, {full_response}"
+
         return full_response
 
     except Exception as e:

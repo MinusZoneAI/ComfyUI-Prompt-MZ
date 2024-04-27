@@ -5,6 +5,23 @@ import mz_llama_cpp
 
 import importlib
 
+import mz_prompts
+
+
+LLava_models = [ 
+    "ggml_llava-v1.5-7b/ggml-model-q4_k.gguf",
+    "ggml_llava-v1.5-7b/ggml-model-q5_k.gguf",
+    "ggml_llava-v1.5-7b/ggml-model-f16.gguf",
+    "ggml_bakllava-1/ggml-model-q4_k.gguf",
+    "ggml_bakllava-1/ggml-model-q5_k.gguf",
+    "ggml_bakllava-1/ggml-model-f16.gguf",
+]
+
+LLava_mmproj_models = [
+    # "llava-1.6-mistral-7b-gguf/mmproj-model-f16.gguf",
+    "ggml_llava-v1.5-7b/mmproj-model-f16.gguf",
+    "ggml_bakllava-1/mmproj-model-f16.gguf",
+]
 
 
 huggingface_models_map = {
@@ -45,11 +62,10 @@ def get_exist_model(model_name):
     return None
 
 
-def image_interrogator(model_name, mmproj_name, n_gpu_layers, image, resolution, download_source=None, options={}):  
-    if options is None:
-        options = {}
-    image = mz_prompt_utils.Utils.resize_max(image, resolution, resolution)
- 
+def image_interrogator(args_dict):  
+    model_name = args_dict.get("llama_cpp_model", "")
+    mmproj_name = args_dict.get("mmproj_model", "")
+    download_source = args_dict.get("download_source", None)  
     model_file = get_exist_model(model_name) 
     mmproj_file = get_exist_model(mmproj_name) 
     
@@ -93,34 +109,90 @@ def image_interrogator(model_name, mmproj_name, n_gpu_layers, image, resolution,
                 mmproj_file = mz_prompt_utils.Utils.hf_download_model(mmproj_url)
 
 
-    response = mz_llama_cpp.llava_cpp_simple_interrogator(
-        model_file=model_file,
-        mmproj_file=mmproj_file,
-        n_gpu_layers=n_gpu_layers,
-        image=image,
-        options=options,
-    )
-    
 
-    mz_llama_cpp.freed_gpu_memory(model_file=model_file)
+    args_dict["llama_cpp_model"] = model_file
+    args_dict["mmproj_model"] = mmproj_file
+    response = base_image_interrogator(args_dict=args_dict)
     return response
         
 
-def base_image_interrogator(model_file, mmproj_file, n_gpu_layers, image, resolution, options={}):  
-    if options is None:
-        options = {}
+def base_image_interrogator(args_dict):
+    model_file = args_dict.get("llama_cpp_model", "")
+    mmproj_file = args_dict.get("mmproj_model", "")
+    image = args_dict.get("image", None)
+    resolution = args_dict.get("resolution", 512)
+    keep_device = args_dict.get("keep_device", False)
+    seed = args_dict.get("seed", -1) 
+    options = args_dict.get("llama_cpp_options", {})
+    options["seed"] = seed
+    
+    
     image = mz_prompt_utils.Utils.resize_max(image, resolution, resolution)
  
-  
+    
+ 
+
+
     response = mz_llama_cpp.llava_cpp_simple_interrogator(
         model_file=model_file,
-        mmproj_file=mmproj_file,
-        n_gpu_layers=n_gpu_layers,
+        mmproj_file=mmproj_file, 
         image=image,
         options=options,
     )
-    
 
-    mz_llama_cpp.freed_gpu_memory(model_file=model_file)
+ 
+
+    sd_format = args_dict.get("sd_format", "v1")
+    if sd_format == "v1":
+        
+        mz_prompt_utils.Utils.print_log(f"response: {response}")
+    
+        
+        schema = mz_llama_cpp.get_schema_obj( 
+            keys_type={
+                "short_desc":  mz_llama_cpp.get_schema_base_type("string"),   
+                "subject_tags":  mz_llama_cpp.get_schema_array("string"),
+                "action_tags":  mz_llama_cpp.get_schema_array("string"),
+                "light_tags":  mz_llama_cpp.get_schema_array("string"), 
+                "other_tags":  mz_llama_cpp.get_schema_array("string"),
+            },
+            required=[
+                "short_desc", 
+                "subject_tags",
+                "action_tags",
+                "light_tags",
+                "other_tags",
+            ]
+        ) 
+        
+        response = mz_llama_cpp.llama_cpp_simple_interrogator_to_json(
+            model_file=model_file, 
+            system=mz_prompts.Beautify_Prompt,
+            question=f"IDEA: {response}",
+            schema=schema,
+            options=options, 
+        )
+
+
+        response_json = json.loads(response)
+        responses = []
+        for key, value in response_json.items():
+            if type(value) == list:
+                # 去除开头.和空格
+                value = [v.strip().lstrip(".") for v in value]
+                # 去除空字符串
+                value = [v for v in value if v != ""]
+                if len(value) > 0:
+                    responses.append(f"({', '.join(value)})")
+
+            else:
+                if value != "":
+                    responses.append(f"({value})")
+        response = ", ".join(responses)
+
+ 
+    
+    if keep_device is False:
+        mz_llama_cpp.freed_gpu_memory(model_file=model_file)
     return response
         

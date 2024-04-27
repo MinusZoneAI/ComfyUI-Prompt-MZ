@@ -6,6 +6,26 @@ import importlib
 
 
 
+
+
+llama3_models = [
+    "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
+    "Meta-Llama-3-8B-Instruct.Q2_K.gguf",
+    "Meta-Llama-3-8B-Instruct.Q3_K_L.gguf",
+    "Meta-Llama-3-8B-Instruct.Q3_K_M.gguf",
+    "Meta-Llama-3-8B-Instruct.Q3_K_S.gguf",
+    "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
+    "Meta-Llama-3-8B-Instruct.Q4_1.gguf",
+    "Meta-Llama-3-8B-Instruct.Q4_K_S.gguf",
+    "Meta-Llama-3-8B-Instruct.Q5_0.gguf",
+    "Meta-Llama-3-8B-Instruct.Q5_1.gguf",
+    "Meta-Llama-3-8B-Instruct.Q5_K_M.gguf",
+    "Meta-Llama-3-8B-Instruct.Q5_K_S.gguf",
+    "Meta-Llama-3-8B-Instruct.Q6_K.gguf",
+    "Meta-Llama-3-8B-Instruct.Q8_0.gguf",
+]
+
+
 def get_exist_model(model_name):
     modelscope_model_path = mz_prompt_utils.Utils.modelscope_download_model(
         model_type="llama3",
@@ -24,9 +44,10 @@ def get_exist_model(model_name):
     return None
 
 
-def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, download_source=None, options={}):     
-    if options is None:
-        options = {}
+def query_beautify_prompt_text(args_dict): 
+    model_name = args_dict.get("llama_cpp_model", "")   
+    download_source = args_dict.get("download_source", None) 
+ 
     import mz_prompts
     importlib.reload(mz_prompts)
     importlib.reload(mz_llama_cpp)
@@ -47,100 +68,10 @@ def query_beautify_prompt_text(model_name, n_gpu_layers, text, style_presets, do
                 if download_source == "hf-mirror.com":
                     model_url = f"https://hf-mirror.com/QuantFactory/Meta-Llama-3-8B-Instruct-GGUF/resolve/main/{model_name}"
                 model_file = mz_prompt_utils.Utils.hf_download_model(model_url)
-                
-        schema = mz_llama_cpp.get_schema_obj(
-            keys_type={
-                "description": mz_llama_cpp.get_schema_base_type("string"),
-                "long_prompt": mz_llama_cpp.get_schema_base_type("string"),
-                "main_color_word": mz_llama_cpp.get_schema_base_type("string"),
-                "camera_angle_word": mz_llama_cpp.get_schema_base_type("string"),
-                "style_words": mz_llama_cpp.get_schema_array("string"),
-                "subject_words": mz_llama_cpp.get_schema_array("string"),
-                "light_words": mz_llama_cpp.get_schema_array("string"),
-                "environment_words": mz_llama_cpp.get_schema_array("string"),
-            },
-            required=[
-                "description",
-                "long_prompt",
-                "main_color_word",
-                "camera_angle_word",
-                "style_words",
-                "subject_words",
-                "light_words",
-                "environment_words",
-            ]
-        )
-
-        options["max_tokens"] = options.get("max_tokens", 2048)
-        options["temperature"] = options.get("temperature", 1.6)
-
-
-        response_json = mz_llama_cpp.llama_cpp_simple_interrogator_to_json(
-            model_file=model_file,
-            n_gpu_layers=n_gpu_layers,
-            system=mz_prompts.Beautify_Prompt,
-            question=f"IDEA: {style_presets},{text}",
-            schema=schema,
-            options=options,
-        ) 
-        mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
-        response = json.loads(response_json)
-        mz_llama_cpp.freed_gpu_memory(model_file=model_file)
-        
-
-        full_responses = []
-
-        if response["description"] != "":
-            full_responses.append(f"({response['description']})")
-        if response["long_prompt"] != "":
-            full_responses.append(f"({response['long_prompt']})")
-        if response["main_color_word"] != "":
-            full_responses.append(f"({response['main_color_word']})")
-        if response["camera_angle_word"] != "":
-            full_responses.append(f"({response['camera_angle_word']})")
-        
-        
-        response["style_words"] = [x for x in response["style_words"] if x != ""]
-        if len(response["style_words"]) > 0:
-            full_responses.append(f"({', '.join(response['style_words'])})")
-
-
-        response["subject_words"] = [x for x in response["subject_words"] if x != ""]
-        if len(response["subject_words"]) > 0:
-            full_responses.append(f"({', '.join(response['subject_words'])})")
-
-        response["light_words"] = [x for x in response["light_words"] if x != ""]
-        if len(response["light_words"]) > 0:
-            full_responses.append(f"({', '.join(response['light_words'])})")
-
-
-        response["environment_words"] = [x for x in response["environment_words"] if x != ""]
-        if len(response["environment_words"]) > 0:
-            full_responses.append(f"({', '.join(response['environment_words'])})")
-
-        full_response = ", ".join(full_responses)
-
-
-        
-        # 去除换行
-        while full_response.find("\n") != -1:
-            full_response = full_response.replace("\n", " ")
-
-        # 句号换成逗号
-        while full_response.find(".") != -1:
-            full_response = full_response.replace(".", ",")
-
-        # 去除多余逗号
-        while full_response.find(",,") != -1:
-            full_response = full_response.replace(",,", ",")
-        while full_response.find(", ,") != -1:
-            full_response = full_response.replace(", ,", ",")
-
-        full_response = mz_prompt_utils.Utils.prompt_zh_to_en(full_response) 
-
-
-        style_presets_prompt_text = mz_llama_cpp.style_presets_prompt.get(style_presets, "")
-        full_response = f"{style_presets_prompt_text}, {full_response}"
+                 
+ 
+        args_dict["llama_cpp_model"] = model_file
+        full_response = mz_llama_cpp.base_query_beautify_prompt_text(args_dict=args_dict)
         return full_response
 
     except Exception as e:

@@ -32,29 +32,10 @@ import mz_llava
 
 
 
-
-llama3_models = [
-    "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
-    "Meta-Llama-3-8B-Instruct.Q2_K.gguf",
-    "Meta-Llama-3-8B-Instruct.Q3_K_L.gguf",
-    "Meta-Llama-3-8B-Instruct.Q3_K_M.gguf",
-    "Meta-Llama-3-8B-Instruct.Q3_K_S.gguf",
-    "Meta-Llama-3-8B-Instruct.Q4_0.gguf",
-    "Meta-Llama-3-8B-Instruct.Q4_1.gguf",
-    "Meta-Llama-3-8B-Instruct.Q4_K_S.gguf",
-    "Meta-Llama-3-8B-Instruct.Q5_0.gguf",
-    "Meta-Llama-3-8B-Instruct.Q5_1.gguf",
-    "Meta-Llama-3-8B-Instruct.Q5_K_M.gguf",
-    "Meta-Llama-3-8B-Instruct.Q5_K_S.gguf",
-    "Meta-Llama-3-8B-Instruct.Q6_K.gguf",
-    "Meta-Llama-3-8B-Instruct.Q8_0.gguf",
-]
-
 class MZ_LLamaCPPOptions:
     @classmethod
     def INPUT_TYPES(s):
-        opt = mz_llama_cpp.LlamaCppOptions()
-        value = opt.value
+        value = mz_llama_cpp.LlamaCppOptions() 
         result = {}
 
         for key in value:
@@ -66,6 +47,8 @@ class MZ_LLamaCPPOptions:
                 result[key] = ("FLOAT", {"default": value[key], "min": 0, "max": 0xffffffffffffffff})
             elif type(value[key]) == str:
                 result[key] = ("STRING", {"default": value[key]})
+            elif type(value[key]) == list:
+                result[key] = (value[key], {"default": value[key][0]})
             else:
                 raise Exception(f"Unknown type: {type(value[key])}")
         
@@ -78,59 +61,79 @@ class MZ_LLamaCPPOptions:
     FUNCTION = "create"
     CATEGORY = CATEGORY_NAME
     def create(self, **kwargs):
-        importlib.reload(mz_llama_cpp)
-        opt = mz_llama_cpp.LlamaCppOptions()
+        importlib.reload(mz_llama_cpp) 
+        opt = {}
         for key in kwargs:
-            opt.value[key] = kwargs[key]
+            opt[key] = kwargs[key]
         return (opt,)
 
 NODE_CLASS_MAPPINGS["MZ_LLamaCPPOptions"] = MZ_LLamaCPPOptions
 NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPOptions"] = f"{AUTHOR_NAME} - LLamaCPPOptions"
 
+
+
+def getCommonCLIPTextEncodeInput():
+    style_presets = mz_llama_cpp.get_style_presets()
+    CommonCLIPTextEncodeInput = {
+        "required": {
+            "prompt_version": (["v1"], {"default": "v1"}), 
+            "style_presets": (
+                style_presets, {"default": style_presets[1]}
+            ),
+            "text": ("STRING", {"multiline": True,}), 
+            "keep_device": ([False,True], {"default": False}),
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+        },
+        "optional": {
+            "clip": ("CLIP", ),
+            "llama_cpp_options": ("LLamaCPPOptions", ),
+        }
+    }
+
+    return CommonCLIPTextEncodeInput
+
 class MZ_LLama3CLIPTextEncode:
     @classmethod
     def INPUT_TYPES(s):
-        m_llama3_models = llama3_models.copy()
+        m_llama3_models = mz_llama3.llama3_models.copy()
         for i in range(len(m_llama3_models)):
             if mz_llama3.get_exist_model(m_llama3_models[i]) is not None:
                 m_llama3_models[i] += "[downloaded]"
 
         
         importlib.reload(mz_llama_cpp)
-        style_presets = mz_llama_cpp.get_style_presets()
 
-        return {
+        result = {
             "required": {
                 "llama_cpp_model": (m_llama3_models, {"default": m_llama3_models[0]}),
                 "download_source": (
                     ["none", "modelscope", "hf-mirror.com",],
                     {"default": "none"}
                 ),
-                "style_presets": (
-                    style_presets, {"default": style_presets[0]}
-                ),
-                "text": ("STRING", {"multiline": True,}), 
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
             },
-            "optional": {
-                "clip": ("CLIP", ),
-                "llama_cpp_options": ("LLamaCPPOptions", ),
-            },
+            "optional": {},
         }
+
+        common_input = getCommonCLIPTextEncodeInput()
+        for key in common_input["required"]:
+            result["required"][key] = common_input["required"][key]
+        for key in common_input["optional"]:
+            result["optional"][key] = common_input["optional"][key]
+
+        return result
+    
+    
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
-    def encode(self, text, llama_cpp_model, style_presets, clip=None, download_source=None, seed=0, n_gpu_layers=40, llama_cpp_options=None):
+    def encode(self, **kwargs):
         importlib.reload(mz_llama3)
-
-        llama_cpp_model = llama_cpp_model.replace("[downloaded]", "")
-
-        options = {}
-        if llama_cpp_options is not None:
-            options = llama_cpp_options.value
-        text = mz_llama3.query_beautify_prompt_text(llama_cpp_model, n_gpu_layers, text, style_presets, download_source, options) 
+ 
+        kwargs["llama_cpp_model"] = kwargs.get("llama_cpp_model", "").replace("[downloaded]", "")
+ 
+        text = mz_llama3.query_beautify_prompt_text(kwargs) 
         conditionings = None
+        clip = kwargs.get("clip", None)
         if clip is not None:
             tokens = clip.tokenize(text)
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
@@ -139,34 +142,62 @@ class MZ_LLama3CLIPTextEncode:
         return (text, conditionings)
     
 NODE_CLASS_MAPPINGS["MZ_LLama3CLIPTextEncode"] = MZ_LLama3CLIPTextEncode
-NODE_DISPLAY_NAME_MAPPINGS["MZ_LLama3CLIPTextEncode"] = f"{AUTHOR_NAME} - LLama3CLIPTextEncode"
+NODE_DISPLAY_NAME_MAPPINGS["MZ_LLama3CLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(LLama3)"
 
 
-LLava_models = [ 
-    "ggml_bakllava-1/ggml-model-q4_k.gguf",
-    "ggml_bakllava-1/ggml-model-q5_k.gguf",
-    "ggml_bakllava-1/ggml-model-f16.gguf",
-    "ggml_llava-v1.5-7b/ggml-model-q4_k.gguf",
-    "ggml_llava-v1.5-7b/ggml-model-q5_k.gguf",
-    "ggml_llava-v1.5-7b/ggml-model-f16.gguf",
-]
+ 
+class MZ_BaseLLamaCPPCLIPTextEncode:
+    @classmethod
+    def INPUT_TYPES(s):        
+        importlib.reload(mz_llama_cpp) 
 
-LLava_mmproj_models = [
-    # "llava-1.6-mistral-7b-gguf/mmproj-model-f16.gguf",
-    "ggml_bakllava-1/mmproj-model-f16.gguf",
-    "ggml_llava-v1.5-7b/mmproj-model-f16.gguf",
-]
+        result = {
+            "required": {
+                "llama_cpp_model": ("STRING", {"default": "", "placeholder": "model_path"}), 
+            },
+            "optional": { 
+            },
+        }
+
+        common_input = getCommonCLIPTextEncodeInput()
+        for key in common_input["required"]:
+            result["required"][key] = common_input["required"][key]
+        for key in common_input["optional"]:
+            result["optional"][key] = common_input["optional"][key]
+
+        return result
+    RETURN_TYPES = ("STRING", "CONDITIONING",)
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+    def encode(self, **kwargs):
+        importlib.reload(mz_llama3)
+ 
+        kwargs["llama_cpp_model"] = kwargs.get("llama_cpp_model", "").replace("[downloaded]", "")
+ 
+        text = mz_llama_cpp.base_query_beautify_prompt_text(kwargs) 
+        conditionings = None
+        clip = kwargs.get("clip", None)
+        if clip is not None:
+            tokens = clip.tokenize(text)
+            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
+            conditionings = [[cond, {"pooled_output": pooled}]]
+ 
+        return (text, conditionings)
+    
+NODE_CLASS_MAPPINGS["MZ_BaseLLamaCPPCLIPTextEncode"] = MZ_BaseLLamaCPPCLIPTextEncode
+NODE_DISPLAY_NAME_MAPPINGS["MZ_BaseLLamaCPPCLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(BaseLLamaCPP)"
+
 
 class MZ_LLavaImageInterrogator:
     @classmethod
     def INPUT_TYPES(s): 
-
-        m_llava_models = LLava_models.copy()
+        importlib.reload(mz_llava)
+        m_llava_models = mz_llava.LLava_models.copy()
         for i in range(len(m_llava_models)):
             if mz_llava.get_exist_model(m_llava_models[i]) is not None:
                 m_llava_models[i] += "[downloaded]"
 
-        m_llava_mmproj_models = LLava_mmproj_models.copy()
+        m_llava_mmproj_models = mz_llava.LLava_mmproj_models.copy()
         for i in range(len(m_llava_mmproj_models)):
             if mz_llava.get_exist_model(m_llava_mmproj_models[i]) is not None:
                 m_llava_mmproj_models[i] += "[downloaded]"
@@ -185,9 +216,9 @@ class MZ_LLavaImageInterrogator:
             ),
             "image":  ("IMAGE",),
             "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
-            # "prefix" : ("STRING", {"default": "(masterpiece)", "multiline": True, }),
-            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-            "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
+            "sd_format": (["none","v1"], {"default": "none"}),
+            "keep_device": ([False,True], {"default": False}),
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}), 
         },
         "optional": {
             "clip": ("CLIP", ),
@@ -196,33 +227,17 @@ class MZ_LLavaImageInterrogator:
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
-    def interrogate(self, llama_cpp_model, mmproj_model, image, resolution, download_source=None, seed=0, clip=None, n_gpu_layers=40, llama_cpp_options=None):
+    def interrogate(self, **kwargs): 
         importlib.reload(mz_llava)
 
-        llama_cpp_model = llama_cpp_model.replace("[downloaded]", "")
-        mmproj_model = mmproj_model.replace("[downloaded]", "")
+        kwargs["llama_cpp_model"] = kwargs.get("llama_cpp_model", "").replace("[downloaded]", "") 
+        kwargs["mmproj_model"] = kwargs.get("mmproj_model", "").replace("[downloaded]", "") 
+         
+        kwargs["image"] = Utils.tensor2pil(kwargs["image"]) 
 
-        # prefix = Utils.prompt_zh_to_en(prefix)
-        # if not prefix.endswith(","):
-        #     prefix += ","
-
-        image_pil = Utils.tensor2pil(image)
-
-
-        options = {}
-        if llama_cpp_options is not None:
-            options = llama_cpp_options.value
-
-        response = mz_llava.image_interrogator(
-            llama_cpp_model,
-            mmproj_model,
-            n_gpu_layers,
-            image_pil, 
-            resolution, 
-            download_source,
-            options,
-        ) 
+        response = mz_llava.image_interrogator(kwargs) 
         conditionings = None
+        clip = kwargs.get("clip", None)
         if clip is not None:
             tokens = clip.tokenize(response)
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
@@ -230,7 +245,7 @@ class MZ_LLavaImageInterrogator:
         return (response, conditionings)
 
 NODE_CLASS_MAPPINGS["MZ_LLavaImageInterrogator"] = MZ_LLavaImageInterrogator
-NODE_DISPLAY_NAME_MAPPINGS["MZ_LLavaImageInterrogator"] = f"{AUTHOR_NAME} - LLavaImageInterrogator"
+NODE_DISPLAY_NAME_MAPPINGS["MZ_LLavaImageInterrogator"] = f"{AUTHOR_NAME} - ImageInterrogator(LLava)"
 class MZ_BaseLLavaImageInterrogator:
     @classmethod
     def INPUT_TYPES(s):  
@@ -239,8 +254,9 @@ class MZ_BaseLLavaImageInterrogator:
             "mmproj_model": ("STRING", {"default": ""}), 
             "image":  ("IMAGE",),
             "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}), 
-            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-            "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
+            "sd_format": (["none","v1"], {"default": "none"}),
+            "keep_device": ([False,True], {"default": False}), 
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}), 
         },
         "optional": {
             "clip": ("CLIP", ),
@@ -249,25 +265,14 @@ class MZ_BaseLLavaImageInterrogator:
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
-    def interrogate(self, llama_cpp_model, mmproj_model, image, resolution, seed=0, clip=None, n_gpu_layers=40, llama_cpp_options=None):
+    def interrogate(self, **kwargs):
         importlib.reload(mz_llava)
+        
+        kwargs["image"] = Utils.tensor2pil(kwargs["image"])
  
-        image_pil = Utils.tensor2pil(image)
-
-
-        options = {}
-        if llama_cpp_options is not None:
-            options = llama_cpp_options.value
-
-        response = mz_llava.base_image_interrogator(
-            llama_cpp_model,
-            mmproj_model,
-            n_gpu_layers,
-            image_pil, 
-            resolution,  
-            options,
-        ) 
+        response = mz_llava.base_image_interrogator(kwargs) 
         conditionings = None
+        clip = kwargs.get("clip", None)
         if clip is not None:
             tokens = clip.tokenize(response)
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
@@ -275,9 +280,11 @@ class MZ_BaseLLavaImageInterrogator:
         return (response, conditionings)
 
 NODE_CLASS_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = MZ_BaseLLavaImageInterrogator
-NODE_DISPLAY_NAME_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = f"{AUTHOR_NAME} - BaseLLavaImageInterrogator"
+NODE_DISPLAY_NAME_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = f"{AUTHOR_NAME} - ImageInterrogator(BaseLLava)"
 
- 
+
+
+
 class MZ_LLamaCPPInterrogator:
     @classmethod
     def INPUT_TYPES(s):
@@ -287,13 +294,13 @@ class MZ_LLamaCPPInterrogator:
                 "use_system": ([True, False], {"default": True}),
                 "system": ("STRING", {"multiline": True, "default": "You are a helpful assistant."}),
                 "prompt": ("STRING", {"multiline": True,}),
-                "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
+                "n_gpu_layers": ("INT", {"default": -1, "min": -1, "max": 0xffffffffffffffff}),
             },
         }
     RETURN_TYPES = ("STRING",)
     FUNCTION = "simple_interrogator"
     CATEGORY = CATEGORY_NAME
-    def simple_interrogator(self, model_file, prompt, use_system=True, system="You are a helpful assistant.", n_gpu_layers=40):
+    def simple_interrogator(self, model_file, prompt, use_system=True, system="You are a helpful assistant.", n_gpu_layers=-1):
         importlib.reload(mz_llama_cpp)
         result = mz_llama_cpp.llama_cpp_simple_interrogator(
             model_file, 
@@ -304,51 +311,6 @@ class MZ_LLamaCPPInterrogator:
         )
         return (result,)
     
-NODE_CLASS_MAPPINGS["MZ_LLamaCPPInterrogator"] = MZ_LLamaCPPInterrogator 
-NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPInterrogator"] = f"{AUTHOR_NAME} - LLamaCPP simple interrogator"
-
-
-
-
-class MZ_BaseLLamaCPPCLIPTextEncode:
-    @classmethod
-    def INPUT_TYPES(s):
-        
-        importlib.reload(mz_llama_cpp)
-        style_presets = mz_llama_cpp.get_style_presets()
-        return {
-            "required": {
-                "llama_cpp_model": ("STRING", {"default": "", "placeholder": "model_path"}),
-                "style_presets": (
-                    style_presets, {"default": style_presets[0]}
-                ),
-                "text": ("STRING", {"multiline": True,}), 
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-                "n_gpu_layers": ("INT", {"default": 40, "min": -1, "max": 0xffffffffffffffff}),
-            },
-            "optional": {
-                "clip": ("CLIP", ),
-                "llama_cpp_options": ("LLamaCPPOptions", ),
-            },
-        }
-    RETURN_TYPES = ("STRING", "CONDITIONING",)
-    FUNCTION = "encode"
-    CATEGORY = CATEGORY_NAME
-    def encode(self, text, llama_cpp_model, style_presets, clip=None, seed=0, n_gpu_layers=40, llama_cpp_options=None):
-        importlib.reload(mz_llama3)
+# NODE_CLASS_MAPPINGS["MZ_LLamaCPPInterrogator"] = MZ_LLamaCPPInterrogator 
+# NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPInterrogator"] = f"{AUTHOR_NAME} - LLamaCPP simple interrogator"
  
-
-        options = {}
-        if llama_cpp_options is not None:
-            options = llama_cpp_options.value
-        text = mz_llama_cpp.base_query_beautify_prompt_text(llama_cpp_model, n_gpu_layers, text, style_presets, options) 
-        conditionings = None
-        if clip is not None:
-            tokens = clip.tokenize(text)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
-            conditionings = [[cond, {"pooled_output": pooled}]]
- 
-        return (text, conditionings)
-    
-NODE_CLASS_MAPPINGS["MZ_BaseLLamaCPPCLIPTextEncode"] = MZ_BaseLLamaCPPCLIPTextEncode
-NODE_DISPLAY_NAME_MAPPINGS["MZ_BaseLLamaCPPCLIPTextEncode"] = f"{AUTHOR_NAME} - BaseLLamaCPPCLIPTextEncode"
