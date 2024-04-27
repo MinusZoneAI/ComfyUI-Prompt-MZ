@@ -18,7 +18,6 @@ LLava_models = [
 ]
 
 LLava_mmproj_models = [
-    # "llava-1.6-mistral-7b-gguf/mmproj-model-f16.gguf",
     "ggml_llava-v1.5-7b/mmproj-model-f16.gguf",
     "ggml_bakllava-1/mmproj-model-f16.gguf",
 ]
