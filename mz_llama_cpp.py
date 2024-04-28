@@ -126,7 +126,7 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
 
     model_and_opt = mz_prompt_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
     
-    # compared
+    
     is_opts_changed = False
 
     if model_and_opt is not None:
