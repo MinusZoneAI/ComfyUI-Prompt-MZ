@@ -26,6 +26,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
   
 import mz_llama3
+import mz_phi3
 import mz_llama_cpp
 import mz_llava
 
@@ -95,17 +96,17 @@ def getCommonCLIPTextEncodeInput():
 class MZ_LLama3CLIPTextEncode:
     @classmethod
     def INPUT_TYPES(s):
-        m_llama3_models = mz_llama3.llama3_models.copy()
-        for i in range(len(m_llama3_models)):
-            if mz_llama3.get_exist_model(m_llama3_models[i]) is not None:
-                m_llama3_models[i] += "[downloaded]"
+        m_models = mz_llama3.llama3_models.copy()
+        for i in range(len(m_models)):
+            if mz_llama3.get_exist_model(m_models[i]) is not None:
+                m_models[i] += "[downloaded]"
 
         
         importlib.reload(mz_llama_cpp)
 
         result = {
             "required": {
-                "llama_cpp_model": (m_llama3_models, {"default": m_llama3_models[0]}),
+                "llama_cpp_model": (m_models, {"default": m_models[0]}),
                 "download_source": (
                     ["none", "modelscope", "hf-mirror.com",],
                     {"default": "none"}
@@ -144,6 +145,59 @@ class MZ_LLama3CLIPTextEncode:
 NODE_CLASS_MAPPINGS["MZ_LLama3CLIPTextEncode"] = MZ_LLama3CLIPTextEncode
 NODE_DISPLAY_NAME_MAPPINGS["MZ_LLama3CLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(LLama3)"
 
+
+
+class MZ_Phi3CLIPTextEncode:
+    @classmethod
+    def INPUT_TYPES(s):
+        m_models = mz_phi3.phi3_models.copy()
+        for i in range(len(m_models)):
+            if mz_llama3.get_exist_model(m_models[i]) is not None:
+                m_models[i] += "[downloaded]"
+
+        
+        importlib.reload(mz_phi3)
+
+        result = {
+            "required": {
+                "llama_cpp_model": (m_models, {"default": m_models[0]}),
+                "download_source": (
+                    ["none", "modelscope", "hf-mirror.com",],
+                    {"default": "none"}
+                ),
+            },
+            "optional": {},
+        }
+
+        common_input = getCommonCLIPTextEncodeInput()
+        for key in common_input["required"]:
+            result["required"][key] = common_input["required"][key]
+        for key in common_input["optional"]:
+            result["optional"][key] = common_input["optional"][key]
+
+        return result
+    
+    
+    RETURN_TYPES = ("STRING", "CONDITIONING",)
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+    def encode(self, **kwargs):
+        importlib.reload(mz_llama3)
+ 
+        kwargs["llama_cpp_model"] = kwargs.get("llama_cpp_model", "").replace("[downloaded]", "")
+ 
+        text = mz_phi3.query_beautify_prompt_text(kwargs) 
+        conditionings = None
+        clip = kwargs.get("clip", None)
+        if clip is not None:
+            tokens = clip.tokenize(text)
+            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
+            conditionings = [[cond, {"pooled_output": pooled}]]
+ 
+        return (text, conditionings)
+
+NODE_CLASS_MAPPINGS["MZ_Phi3CLIPTextEncode"] = MZ_Phi3CLIPTextEncode
+NODE_DISPLAY_NAME_MAPPINGS["MZ_Phi3CLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(Phi3)"
 
  
 class MZ_BaseLLamaCPPCLIPTextEncode:

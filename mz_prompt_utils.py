@@ -366,7 +366,7 @@ class Utils:
         return comfy.model_management.get_torch_device()
     
  
-    def download_file(url, filepath, threads=4):
+    def download_file(url, filepath, threads=8):
         
         get_size_tmp = requests.get(url, stream=True)
         total_size = int(get_size_tmp.headers.get("content-length", 0))
@@ -413,6 +413,9 @@ class Utils:
                         existing_size = 0
                 
                     headers = {"Range": f"bytes={start + existing_size}-{end}"}
+                    if start + existing_size >= end:
+                        continue
+                    # print(f"Downloading {cache_filepath} with headers bytes={start + existing_size}-{end}")
 
                     # Streaming, so we can iterate over the response.
                     response = requests.get(url, stream=True, headers=headers)
@@ -556,11 +559,29 @@ modelscope_models_map = {
             "output": "modelscope_models/ggml_bakllava-1/ggml-model-q5_k.gguf",
             "SHA256": "c93de1376be9b6977cc94d252a3d165d6059e07b528de0fa762534d9599b27d6",
         },
+        "ggml_llava-v1.5-7b/ggml-model-q4_k.gguf":{
+            "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_llava-v1.5-7b%2Fggml-model-q4_k.gguf",
+            "output": "modelscope_models/ggml_llava-v1.5-7b/ggml-model-q4_k.gguf",
+            "SHA256": "7ac9c2f7b8d76cc7f3118cdf0953ebab7a7a9b12bad5dbe237219d2ab61765ea",
+        },
         "ggml_bakllava-1/mmproj-model-f16.gguf":{
             "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_bakllava-1%2Fmmproj-model-f16.gguf",
             "output": "modelscope_models/ggml_bakllava-1/mmproj-model-f16.gguf",
             "SHA256": "2e467eba710002839e0966d5e329942bb836eabd4e787bc713b07eff1d8ea13b"
         },
+        "ggml_llava-v1.5-7b/mmproj-model-f16.gguf":{
+            "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_llava-v1.5-7b%2Fmmproj-model-f16.gguf",
+            "output": "modelscope_models/ggml_llava-v1.5-7b/mmproj-model-f16.gguf",
+            "SHA256": "b7c8ff0f58fca47d28ba92c4443adf8653f3349282cb8d9e6911f22d9b3814fe"
+        },
+        
+    },
+    "phi3":{
+        "Phi-3-mini-4k-instruct-q4.gguf":{
+            "url":"https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=Phi-3-mini-4k-instruct-gguf%2FPhi-3-mini-4k-instruct-q4.gguf",
+            "output":"modelscope_models/Phi-3-mini-4k-instruct-gguf/Phi-3-mini-4k-instruct-q4.gguf",
+            "SHA256":"1cd9a9df07350196623f93bf4829cf228959e07ad32f787b8fdd7f5956f5b9de"
+        }
     },
 }
 

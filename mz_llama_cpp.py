@@ -4,7 +4,6 @@ import os
 import shutil
 import subprocess
 import sys
-import llama_cpp
 import torch
 try:
     import mz_prompt_utils
@@ -123,6 +122,7 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     check_llama_cpp_requirements()
 
     from llama_cpp import Llama
+    import llama_cpp
 
     model_and_opt = mz_prompt_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
     
