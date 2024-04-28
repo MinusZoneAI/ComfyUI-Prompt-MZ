@@ -411,8 +411,11 @@ class Utils:
                         existing_size = os.path.getsize(cache_filepath)
                     else:
                         existing_size = 0
-                
+
+                    
                     headers = {"Range": f"bytes={start + existing_size}-{end}"}
+                    if end == total_size:
+                        headers = {"Range": f"bytes={start + existing_size}-"}
                     if start + existing_size >= end:
                         continue
                     # print(f"Downloading {cache_filepath} with headers bytes={start + existing_size}-{end}")
