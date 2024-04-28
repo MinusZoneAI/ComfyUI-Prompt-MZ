@@ -350,7 +350,7 @@ def llava_cpp_messages(model_file, chat_handler, messages, options={}):
     if options is None:
         options = {}
     options["logits_all"] = True
-    options["n_ctx"] = max(2048, options.get("n_ctx", 2048)) 
+    options["n_ctx"] = max(4096, options.get("n_ctx", 4096)) 
     return llama_cpp_messages(model_file, chat_handler, messages, options)
 
  
