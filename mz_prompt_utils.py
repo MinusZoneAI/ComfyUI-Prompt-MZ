@@ -425,6 +425,8 @@ class Utils:
         
                     def download_file_thread(response, cache_filepath):
                         block_size = 1024
+                        if end - (start + existing_size) < block_size:
+                            block_size = end - (start + existing_size)
                         with open(cache_filepath, "ab") as file:
                             for data in response.iter_content(block_size):
                                 file.write(data)
