@@ -43,9 +43,9 @@ class MZ_LLamaCPPOptions:
             if type(value[key]) == bool:
                 result[key] = ([True, False], {"default": value[key]})
             elif type(value[key]) == int:
-                result[key] = ("INT", {"default": value[key], "min": 0, "max": 0xffffffffffffffff})
+                result[key] = ("INT", {"default": value[key], "min": -0xffffffffffffffff, "max": 0xffffffffffffffff})
             elif type(value[key]) == float:
-                result[key] = ("FLOAT", {"default": value[key], "min": 0, "max": 0xffffffffffffffff})
+                result[key] = ("FLOAT", {"default": value[key], "min": -0xffffffffffffffff, "max": 0xffffffffffffffff})
             elif type(value[key]) == str:
                 result[key] = ("STRING", {"default": value[key]})
             elif type(value[key]) == list:
