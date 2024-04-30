@@ -65,4 +65,7 @@ CUDA版本切换到12.1,如果你使用秋叶启动器,高级设置->环境维�
 </a>
 
 ## Contact
-- Bilibili: https://space.bilibili.com/5950992
+- 绿泡泡: minrszone
+- Bilibili: [minus_zone](https://space.bilibili.com/5950992)
+- 小红书: [MinusZoneAI](https://www.xiaohongshu.com/user/profile/5f072e990000000001005472)
+- 爱发电: [MinusZoneAI](https://afdian.net/@MinusZoneAI)
