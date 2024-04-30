@@ -9,9 +9,9 @@ import mz_prompts
 
 
 LLava_models = [ 
-    "llava-1.6-mistral-7b-gguf/llava-1.6-mistral-7b.Q5_K_M.gguf",
+    "llava-1.6-mistral-7b-gguf/llava-v1.6-mistral-7b.Q5_K_M.gguf",
     "llava-v1.6-vicuna-13b-gguf/llava-v1.6-vicuna-13b.Q5_K_M.gguf",
-    "ggml_llava-v1.5-7b/ggml-model-q4_k.gguf",
+    "ggml_llava-v1.5-7b/ggml-model-q4_k.gguf", 
     "ggml_llava-v1.5-7b/ggml-model-q5_k.gguf",
     "ggml_llava-v1.5-7b/ggml-model-f16.gguf",
     "ggml_bakllava-1/ggml-model-q4_k.gguf",
@@ -154,17 +154,19 @@ def base_image_interrogator(args_dict):
         
         schema = mz_llama_cpp.get_schema_obj( 
             keys_type={
-                "short_desc":  mz_llama_cpp.get_schema_base_type("string"),   
+                "short_describes":  mz_llama_cpp.get_schema_base_type("string"),   
                 "subject_tags":  mz_llama_cpp.get_schema_array("string"),
                 "action_tags":  mz_llama_cpp.get_schema_array("string"),
                 "light_tags":  mz_llama_cpp.get_schema_array("string"), 
+                "scenes_tags":  mz_llama_cpp.get_schema_array("string"),
                 "other_tags":  mz_llama_cpp.get_schema_array("string"),
             },
             required=[
-                "short_desc", 
+                "short_describes", 
                 "subject_tags",
                 "action_tags",
                 "light_tags",
+                "scenes_tags",
                 "other_tags",
             ]
         ) 

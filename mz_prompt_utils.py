@@ -588,7 +588,7 @@ modelscope_models_map = {
             "output": "modelscope_models/llava-v1.6-vicuna-13b-gguf/mmproj-model-f16.gguf",
             "SHA256": "9860fbc162d6df40d12f32211aed11ab4826e16e473e6fff595496b9943872e2"
         },
-        "llava-1.6-mistral-7b-gguf/llava-1.6-mistral-7b.Q5_K_M.gguf": {
+        "llava-1.6-mistral-7b-gguf/llava-v1.6-mistral-7b.Q5_K_M.gguf": {
             "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llava-1.6-mistral-7b-gguf%2Fllava-v1.6-mistral-7b.Q5_K_M.gguf",
             "output": "modelscope_models/llava-1.6-mistral-7b-gguf/llava-v1.6-mistral-7b.Q5_K_M.gguf",
             "SHA256": "b1d37fc65ecb80aa8f1ce185bf4d7605bc3c5cc5bcc77a160c3a1b0377631112",
