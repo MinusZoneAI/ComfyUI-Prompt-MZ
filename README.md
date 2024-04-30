@@ -6,6 +6,7 @@
 Use llama.cpp to assist in generating some nodes related to prompt words, including beautifying prompt words and image recognition similar to clip-interrogator
 
 ## Recent changes
+* [2024-04-30] 支持自定义指令 (Support for custom instructions)
 * [2024-04-30] 添加llava-v1.6-vicuna-13b (add llava-v1.6-vicuna-13b)
 * [2024-04-30] 添加翻译
 * [2024-04-28] 新增Phi-3-mini节点 (add Phi-3-mini node)
