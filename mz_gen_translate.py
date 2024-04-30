@@ -31,6 +31,10 @@ def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
     translation_config = os.path.join(
         translation_dir, "ComfyUI_MinusZone.translate.json")
     if os.path.exists(translation_dir):
+        if not os.path.exists(translation_config):
+            with open(translation_config, "w") as f:
+                f.write("{}")
+
         if os.path.exists(translation_config):
             translate_config = "{}"
             with open(translation_config, "r") as f:
