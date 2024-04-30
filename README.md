@@ -44,5 +44,12 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 + BaseLLamaCPPCLIPTextEncode (可以手动传入模型路径/You can directly pass in the model path)
 + BaseLLavaImageInterrogator (可以手动传入模型路径/You can directly pass in the model path)
 
+## FAQ
 
+### LLama.dll 无法加载 (Failed to load shared library LLama.dll)
+CUDA版本切换到12.1,如果你使用秋叶启动器,高级设置->环境维护->安装PyTorch->选择版本中选择CUDA 12.1的版本
+
+
+### ...llama_cpp_python-0,2.63-cp310-cp310-win_and64.whl returned nonzero exit status
+保持网络畅通,该上魔法上魔法,或者手动安装llama_cpp_python
 
