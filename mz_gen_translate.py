@@ -2,6 +2,9 @@
 
 import os
 import json
+import folder_paths
+from pathlib import Path
+COMFY_PATH = Path(folder_paths.__file__).parent
 
 
 ZH_Replace_Map = {
@@ -25,8 +28,8 @@ ZH_Replace_Map = {
 
 
 def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
-    translation_dir = os.path.join(os.path.dirname(
-        os.path.dirname(__file__)), "AIGODLIKE-COMFYUI-TRANSLATION", "zh-CN", "Nodes")
+    translation_dir = os.path.join(COMFY_PATH, "custom_nodes",
+                                   "AIGODLIKE-COMFYUI-TRANSLATION", "zh-CN", "Nodes")
 
     translation_config = os.path.join(
         translation_dir, "ComfyUI_MinusZone.translate.json")
@@ -83,7 +86,6 @@ def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
 
             with open(translation_config, "w", encoding="utf-8") as f:
                 f.write(json.dumps(nodes, indent=4, ensure_ascii=False))
-
 
     else:
         print("No translation dir found.")
