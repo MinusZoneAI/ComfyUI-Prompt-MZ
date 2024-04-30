@@ -436,78 +436,96 @@ def base_query_beautify_prompt_text(args_dict):
     importlib.reload(mz_prompts) 
 
 
+    customize_instruct = args_dict.get("customize_instruct", None)
+    mz_prompt_utils.Utils.print_log(f"customize_instruct: {customize_instruct}")
     try: 
-        schema = get_schema_obj(
-            keys_type={
-                "description": get_schema_base_type("string"),
-                "long_prompt": get_schema_base_type("string"),
-                "main_color_word": get_schema_base_type("string"),
-                "camera_angle_word": get_schema_base_type("string"),
-                "style_words": get_schema_array("string"),
-                "subject_words": get_schema_array("string"),
-                "light_words": get_schema_array("string"),
-                "environment_words": get_schema_array("string"),
-            },
-            required=[
-                "description",
-                "long_prompt",
-                "main_color_word",
-                "camera_angle_word",
-                "style_words",
-                "subject_words",
-                "light_words",
-                "environment_words",
-            ]
-        )
- 
-        question = f"IDEA: {style_presets},{text}"
-        if style_presets == "none":
-            question = f"IDEA: {text}"
+        schema = None
+        if customize_instruct is None:
+            schema = get_schema_obj(
+                keys_type={
+                    "description": get_schema_base_type("string"),
+                    "long_prompt": get_schema_base_type("string"),
+                    "main_color_word": get_schema_base_type("string"),
+                    "camera_angle_word": get_schema_base_type("string"),
+                    "style_words": get_schema_array("string"),
+                    "subject_words": get_schema_array("string"),
+                    "light_words": get_schema_array("string"),
+                    "environment_words": get_schema_array("string"),
+                },
+                required=[
+                    "description",
+                    "long_prompt",
+                    "main_color_word",
+                    "camera_angle_word",
+                    "style_words",
+                    "subject_words",
+                    "light_words",
+                    "environment_words",
+                ]
+            )
+    
+            question = f"IDEA: {style_presets},{text}"
+            if style_presets == "none":
+                question = f"IDEA: {text}"
+
+            system_prompt = mz_prompts.Beautify_Prompt + mz_prompts.Long_prompt + "\n"
+
+        else:
+
+            system_prompt = customize_instruct.get("system", "")
+            question = customize_instruct.get("instruct", "{text}")
+
+            system_prompt = system_prompt.replace("{text}", text)
+            question = question.replace("{text}", text)
+
+            mz_prompt_utils.Utils.print_log(f"system_prompt: {system_prompt}")
+            mz_prompt_utils.Utils.print_log(f"question: {question}")
+
+
         response_json = llama_cpp_simple_interrogator_to_json(
             model_file=model_file, 
-            system=mz_prompts.Beautify_Prompt + mz_prompts.Long_prompt + "\n",
+            system=system_prompt,
             question=question,
             schema=schema,
             options=options,
         ) 
         mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
-        response = json.loads(response_json)
         if keep_device is False:
             freed_gpu_memory(model_file=model_file)
-        
-
-        full_responses = []
-
-        if response["description"] != "":
-            full_responses.append(f"({response['description']})")
-        if response["long_prompt"] != "":
-            full_responses.append(f"({response['long_prompt']})")
-        if response["main_color_word"] != "":
-            full_responses.append(f"({response['main_color_word']})")
-        if response["camera_angle_word"] != "":
-            full_responses.append(f"({response['camera_angle_word']})")
-        
-        
-        response["style_words"] = [x for x in response["style_words"] if x != ""]
-        if len(response["style_words"]) > 0:
-            full_responses.append(f"({', '.join(response['style_words'])})")
 
 
-        response["subject_words"] = [x for x in response["subject_words"] if x != ""]
-        if len(response["subject_words"]) > 0:
-            full_responses.append(f"({', '.join(response['subject_words'])})")
+        if schema is not None:
+            response = json.loads(response_json)
+            full_responses = []
 
-        response["light_words"] = [x for x in response["light_words"] if x != ""]
-        if len(response["light_words"]) > 0:
-            full_responses.append(f"({', '.join(response['light_words'])})")
+            if response["description"] != "":
+                full_responses.append(f"({response['description']})")
+            if response["long_prompt"] != "":
+                full_responses.append(f"({response['long_prompt']})")
+            if response["main_color_word"] != "":
+                full_responses.append(f"({response['main_color_word']})")
+            if response["camera_angle_word"] != "":
+                full_responses.append(f"({response['camera_angle_word']})")
+            
+            response["style_words"] = [x for x in response["style_words"] if x != ""]
+            if len(response["style_words"]) > 0:
+                full_responses.append(f"({', '.join(response['style_words'])})")
 
+            response["subject_words"] = [x for x in response["subject_words"] if x != ""]
+            if len(response["subject_words"]) > 0:
+                full_responses.append(f"({', '.join(response['subject_words'])})")
 
-        response["environment_words"] = [x for x in response["environment_words"] if x != ""]
-        if len(response["environment_words"]) > 0:
-            full_responses.append(f"({', '.join(response['environment_words'])})")
+            response["light_words"] = [x for x in response["light_words"] if x != ""]
+            if len(response["light_words"]) > 0:
+                full_responses.append(f"({', '.join(response['light_words'])})")
 
-        full_response = ", ".join(full_responses)
+            response["environment_words"] = [x for x in response["environment_words"] if x != ""]
+            if len(response["environment_words"]) > 0:
+                full_responses.append(f"({', '.join(response['environment_words'])})")
 
+            full_response = ", ".join(full_responses)
+        else:
+            full_response = response_json
 
         
         # 去除换行
@@ -526,7 +544,6 @@ def base_query_beautify_prompt_text(args_dict):
 
         full_response = mz_prompt_utils.Utils.prompt_zh_to_en(full_response) 
 
-
         style_presets_prompt_text = style_presets_prompt.get(style_presets, "")
 
         if style_presets_prompt_text != "":
@@ -538,26 +555,4 @@ def base_query_beautify_prompt_text(args_dict):
         freed_gpu_memory(model_file=model_file)
         # mz_utils.Utils.print_log(f"Error in auto_prompt_text: {e}")
         raise e
-
-
-if __name__ == "__main__":
-    check_llama_cpp_requirements()
-    llama_cpp_simple_interrogator(
-        "D:\下载\gemma-1.1-2b-it-IQ3_M.gguf", 
-        use_system=False,
-        system="""
-Stable Diffusion is an AI art generation model similar to DALLE-2.
-Below is a list of prompts that can be used to generate images with Stable Diffusion:
-- portait of a homer simpson archer shooting arrow at forest monster, front game card, drark, marvel comics, dark, intricate, highly detailed, smooth, artstation, digital illustration by ruan jia and mandy jurgens and artgerm and wayne barlowe and greg rutkowski and zdislav beksinski
-- pirate, concept art, deep focus, fantasy, intricate, highly detailed, digital painting, artstation, matte, sharp focus, illustration, art by magali villeneuve, chippy, ryan yee, rk post, clint cearley, daniel ljunggren, zoltan boros, gabor szikszai, howard lyon, steve argyle, winona nelson
-- ghost inside a hunted room, art by lois van baarle and loish and ross tran and rossdraws and sam yang and samdoesarts and artgerm, digital art, highly detailed, intricate, sharp focus, Trending on Artstation HQ, deviantart, unreal engine 5, 4K UHD image
-- red dead redemption 2, cinematic view, epic sky, detailed, concept art, low angle, high detail, warm lighting, volumetric, godrays, vivid, beautiful, trending on artstation, by jordan grimmer, huge scene, grass, art greg rutkowski
-- a fantasy style portrait painting of rachel lane / alison brie hybrid in the style of francois boucher oil painting unreal 5 daz. rpg portrait, extremely detailed artgerm greg rutkowski alphonse mucha greg hildebrandt tim hildebrandt
-- athena, greek goddess, claudia black, art by artgerm and greg rutkowski and magali villeneuve, bronze greek armor, owl crown, d & d, fantasy, intricate, portrait, highly detailed, headshot, digital painting, trending on artstation, concept art, sharp focus, illustration
-- closeup portrait shot of a large strong female biomechanic woman in a scenic scifi environment, intricate, elegant, highly detailed, centered, digital painting, artstation, concept art, smooth, sharp focus, warframe, illustration, thomas kinkade, tomasz alen kopera, peter mohrbacher, donato giancola, leyendecker, boris vallejo
-- ultra realistic illustration of steve urkle as the hulk, intricate, elegant, highly detailed, digital painting, artstation, concept art, smooth, sharp focus, illustration, art by artgerm and greg rutkowski and alphonse mucha
-I want you to write me a list of detailed prompts exactly about the idea written after IDEA. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
-Please generate the long prompt version of the short one according to the given examples. Long prompt version should consist of 3 to 5 sentences. Long prompt version must sepcify the color, shape, texture or spatial relation of the included objects. DO NOT generate sentences that describe any atmosphere!!!
-""",
-        question="IDEA: 一匹马",
-    )
+ 

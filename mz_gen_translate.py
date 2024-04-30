@@ -24,13 +24,17 @@ ZH_Replace_Map = {
     "clip": "CLIP",
     "conditioning": "条件",
     "ImageInterrogator": "图像反推",
+    "customize_instruct": "自定义指令",
+    "CustomizeInstruct": "自定义指令",
 }
 
 
 def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
     translation_dirs = [
-        os.path.join(COMFY_PATH, "custom_nodes", "AIGODLIKE-COMFYUI-TRANSLATION", "zh-CN", "Nodes"),
-        os.path.join(COMFY_PATH, "custom_nodes", "AIGODLIKE-ComfyUI-Translation", "zh-CN", "Nodes"),
+        os.path.join(COMFY_PATH, "custom_nodes",
+                     "AIGODLIKE-COMFYUI-TRANSLATION", "zh-CN", "Nodes"),
+        os.path.join(COMFY_PATH, "custom_nodes",
+                     "AIGODLIKE-ComfyUI-Translation", "zh-CN", "Nodes"),
     ]
     translation_dir = translation_dirs[0]
     for dir in translation_dirs:
