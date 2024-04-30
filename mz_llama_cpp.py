@@ -529,15 +529,17 @@ def base_query_beautify_prompt_text(args_dict):
                 options=options,
             )
 
-            prefix = customize_instruct.get("prefix", "")
-            # 去除前缀
-            if prefix != "":
-                full_response = full_response.lstrip(prefix)
+            start_str = customize_instruct.get("start_str", "") 
+            if start_str != "" and full_response.find(start_str) != -1:
+                full_response_list = full_response.split(start_str)
+                full_response_list[0] = ""
+                full_response = start_str.join(full_response_list)
 
-            suffix = customize_instruct.get("suffix", "")
-            # 去除后缀
-            if suffix != "":
-                full_response = full_response.rstrip(suffix)
+            end_str = customize_instruct.get("end_str", "")
+            if end_str != "" and full_response.find(end_str) != -1:
+                full_response_list = full_response.split(end_str)
+                full_response_list[-1] = ""
+                full_response = end_str.join(full_response_list)
 
 
         if keep_device is False:
