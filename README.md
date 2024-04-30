@@ -35,6 +35,9 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 
   ![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/256483e0-c3b7-4d04-82f4-f71f7d9584c9)
 
++ CustomizeInstruct
+
+  ![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/d328ba44-2eab-4f95-bd35-585a9cdc9ec2)
 
 
 + BaseLLamaCPPCLIPTextEncode (可以手动传入模型路径/You can directly pass in the model path)
