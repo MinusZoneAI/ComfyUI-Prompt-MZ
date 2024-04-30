@@ -28,9 +28,15 @@ ZH_Replace_Map = {
 
 
 def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
-    translation_dir = os.path.join(COMFY_PATH, "custom_nodes",
-                                   "AIGODLIKE-COMFYUI-TRANSLATION", "zh-CN", "Nodes")
-
+    translation_dirs = [
+        os.path.join(COMFY_PATH, "custom_nodes", "AIGODLIKE-COMFYUI-TRANSLATION", "zh-CN", "Nodes"),
+        os.path.join(COMFY_PATH, "custom_nodes", "AIGODLIKE-ComfyUI-Translation", "zh-CN", "Nodes"),
+    ]
+    translation_dir = translation_dirs[0]
+    for dir in translation_dirs:
+        if os.path.exists(dir):
+            translation_dir = dir
+            break
     translation_config = os.path.join(
         translation_dir, "ComfyUI_MinusZone.translate.json")
     if os.path.exists(translation_dir):
@@ -88,4 +94,4 @@ def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
                 f.write(json.dumps(nodes, indent=4, ensure_ascii=False))
 
     else:
-        print("No translation dir found.")
+        print("No translation dir found!")
