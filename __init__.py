@@ -8,6 +8,7 @@ import comfy.utils
 import shutil
 import comfy.samplers 
 
+
 AUTHOR_NAME = u"[MinusZone]" 
 CATEGORY_NAME = f"{AUTHOR_NAME} Utils"
 
@@ -29,7 +30,6 @@ import mz_llama3
 import mz_phi3
 import mz_llama_cpp
 import mz_llava
-
 
 
 
@@ -59,6 +59,9 @@ class MZ_LLamaCPPOptions:
     
 
     RETURN_TYPES = ("LLamaCPPOptions",)
+    RETURN_NAMES = ("llama_cpp_options",)
+
+
     FUNCTION = "create"
     CATEGORY = CATEGORY_NAME
     def create(self, **kwargs):
@@ -125,6 +128,7 @@ class MZ_LLama3CLIPTextEncode:
     
     
     RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
     def encode(self, **kwargs):
@@ -179,6 +183,7 @@ class MZ_Phi3CLIPTextEncode:
     
     
     RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
     def encode(self, **kwargs):
@@ -221,6 +226,7 @@ class MZ_BaseLLamaCPPCLIPTextEncode:
 
         return result
     RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
     def encode(self, **kwargs):
@@ -279,6 +285,7 @@ class MZ_LLavaImageInterrogator:
             "llama_cpp_options": ("LLamaCPPOptions", ),
         }}
     RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
     def interrogate(self, **kwargs): 
@@ -317,6 +324,7 @@ class MZ_BaseLLavaImageInterrogator:
             "llama_cpp_options": ("LLamaCPPOptions", ),
         }}
     RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
     def interrogate(self, **kwargs):
@@ -352,6 +360,7 @@ class MZ_LLamaCPPInterrogator:
             },
         }
     RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("text",)
     FUNCTION = "simple_interrogator"
     CATEGORY = CATEGORY_NAME
     def simple_interrogator(self, model_file, prompt, use_system=True, system="You are a helpful assistant.", n_gpu_layers=-1):
@@ -368,3 +377,8 @@ class MZ_LLamaCPPInterrogator:
 # NODE_CLASS_MAPPINGS["MZ_LLamaCPPInterrogator"] = MZ_LLamaCPPInterrogator 
 # NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPInterrogator"] = f"{AUTHOR_NAME} - LLamaCPP simple interrogator"
  
+
+
+
+import mz_gen_translate
+mz_gen_translate.gen_translate(NODE_DISPLAY_NAME_MAPPINGS, NODE_CLASS_MAPPINGS)

@@ -60,6 +60,7 @@ def check_llama_cpp_requirements():
             cuda_version = "cu" + torch.version.cuda.replace(".", "") 
             if cuda_version not in ["cu121", "cu122", "cu123"]:
                 cuda_version = "cu121"
+                print(f"Warning: The current version of cuda is not supported. (警告: 当前cuda版本不支持) {torch.version.cuda} (默认使用cu121)")
         else:
             cuda_version = "cpu"
 

@@ -9,6 +9,8 @@ import mz_prompts
 
 
 LLava_models = [ 
+    "llava-1.6-mistral-7b-gguf/llava-1.6-mistral-7b.Q5_K_M.gguf",
+    "llava-v1.6-vicuna-13b-gguf/llava-v1.6-vicuna-13b.Q5_K_M.gguf",
     "ggml_llava-v1.5-7b/ggml-model-q4_k.gguf",
     "ggml_llava-v1.5-7b/ggml-model-q5_k.gguf",
     "ggml_llava-v1.5-7b/ggml-model-f16.gguf",
@@ -18,12 +20,15 @@ LLava_models = [
 ]
 
 LLava_mmproj_models = [
+    "llava-1.6-mistral-7b-gguf/mmproj-model-f16.gguf",
+    "llava-v1.6-vicuna-13b-gguf/mmproj-model-f16.gguf",
     "ggml_llava-v1.5-7b/mmproj-model-f16.gguf",
     "ggml_bakllava-1/mmproj-model-f16.gguf",
 ]
 
 
 huggingface_models_map = {
+    "llava-v1.6-vicuna-13b-gguf": "cjpais",
     "llava-1.6-mistral-7b-gguf": "cjpais",
     "ggml_llava-v1.5-7b": "mys",
     "ggml_llava-v1.5-13b": "mys",
