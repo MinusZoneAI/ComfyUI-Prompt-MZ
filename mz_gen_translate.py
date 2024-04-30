@@ -32,12 +32,12 @@ def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
         translation_dir, "ComfyUI_MinusZone.translate.json")
     if os.path.exists(translation_dir):
         if not os.path.exists(translation_config):
-            with open(translation_config, "w") as f:
+            with open(translation_config, "w", encoding="utf-8") as f:
                 f.write("{}")
 
         if os.path.exists(translation_config):
             translate_config = "{}"
-            with open(translation_config, "r") as f:
+            with open(translation_config, "r", encoding="utf-8") as f:
                 translate_config = f.read()
             nodes = json.loads(translate_config)
             for key in NODE_DISPLAY_NAME_MAPPINGS:
@@ -81,5 +81,5 @@ def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
                     except:
                         pass
 
-            with open(translation_config, "w") as f:
+            with open(translation_config, "w", encoding="utf-8") as f:
                 f.write(json.dumps(nodes, indent=4, ensure_ascii=False))
