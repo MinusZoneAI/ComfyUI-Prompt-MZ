@@ -482,11 +482,7 @@ def base_query_beautify_prompt_text(args_dict):
             mz_prompt_utils.Utils.print_log(f"question: {question}")
 
 
-        
-
-
         if schema is not None:
-
             response_json = llama_cpp_simple_interrogator_to_json(
                 model_file=model_file, 
                 system=system_prompt,
@@ -494,9 +490,7 @@ def base_query_beautify_prompt_text(args_dict):
                 schema=schema,
                 options=options,
             ) 
-            mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
-            if keep_device is False:
-                freed_gpu_memory(model_file=model_file)
+            mz_prompt_utils.Utils.print_log(f"response_json: {response_json}") 
 
             response = json.loads(response_json)
             full_responses = []
@@ -535,8 +529,20 @@ def base_query_beautify_prompt_text(args_dict):
                 options=options,
             )
 
+            prefix = customize_instruct.get("prefix", "")
+            # 去除前缀
+            if prefix != "":
+                full_response = full_response.lstrip(prefix)
 
-        
+            suffix = customize_instruct.get("suffix", "")
+            # 去除后缀
+            if suffix != "":
+                full_response = full_response.rstrip(suffix)
+
+
+        if keep_device is False:
+            freed_gpu_memory(model_file=model_file)
+
         # 去除换行
         while full_response.find("\n") != -1:
             full_response = full_response.replace("\n", " ")

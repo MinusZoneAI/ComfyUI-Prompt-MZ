@@ -83,6 +83,8 @@ class MZ_CustomizeInstruct:
             "required": {
                 "system": ("STRING", {"multiline": True, "default": mz_prompts.Long_prompt}),
                 "instruct": ("STRING", {"multiline": True, "default": "Short: {text}"}),
+                "prefix": ("STRING", {"default": "Long: "}),
+                "suffix": ("STRING", {"default": ""}),
             },
         }
 
