@@ -54,3 +54,15 @@ CUDA版本切换到12.1,如果你使用秋叶启动器,高级设置->环境维�
 ### ...llama_cpp_python-0,2.63-cp310-cp310-win_and64.whl returned nonzero exit status
 保持网络畅通,该上魔法上魔法,或者手动安装llama_cpp_python
 
+## Star History
+
+<a href="https://star-history.com/#MinusZoneAI/ComfyUI-Prompt-MZ&Date">
+ <picture>
+   <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=MinusZoneAI/ComfyUI-Prompt-MZ&type=Date&theme=dark" />
+   <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=MinusZoneAI/ComfyUI-Prompt-MZ&type=Date" />
+   <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=MinusZoneAI/ComfyUI-Prompt-MZ&type=Date" />
+ </picture>
+</a>
+
+## Contact
+- Bilibili: https://space.bilibili.com/5950992
