@@ -532,13 +532,15 @@ def base_query_beautify_prompt_text(args_dict):
             start_str = customize_instruct.get("start_str", "") 
             if start_str != "" and full_response.find(start_str) != -1:
                 full_response_list = full_response.split(start_str)
-                full_response_list[0] = ""
+                # 删除第一个元素
+                full_response_list.pop(0)
                 full_response = start_str.join(full_response_list)
 
             end_str = customize_instruct.get("end_str", "")
             if end_str != "" and full_response.find(end_str) != -1:
                 full_response_list = full_response.split(end_str)
-                full_response_list[-1] = ""
+                # 删除最后一个元素
+                full_response_list.pop()
                 full_response = end_str.join(full_response_list)
 
 
