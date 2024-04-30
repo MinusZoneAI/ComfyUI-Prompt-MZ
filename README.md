@@ -1,4 +1,5 @@
-![Image Description](res/1.png)
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/c5bae957-2c47-4a73-86e0-2949fcf72fd5)
+
 
 # ComfyUI-Prompt-MZ
 基于llama.cpp的一些和提示词相关的节点，目前包括美化提示词和类似clip-interrogator的图片反推
