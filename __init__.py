@@ -314,6 +314,7 @@ class MZ_LLavaImageInterrogator:
             "optional": {
             "clip": ("CLIP", ),
             "llama_cpp_options": ("LLamaCPPOptions", ),
+            "customize_instruct": ("CustomizeInstruct", ),
         }}
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
@@ -360,6 +361,7 @@ class MZ_BaseLLavaImageInterrogator:
             "optional": {
             "clip": ("CLIP", ),
             "llama_cpp_options": ("LLamaCPPOptions", ),
+            "customize_instruct": ("CustomizeInstruct", ),
         }}
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)

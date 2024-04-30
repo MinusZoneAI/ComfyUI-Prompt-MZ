@@ -135,19 +135,50 @@ def base_image_interrogator(args_dict):
  
     
  
+    
+    customize_instruct = args_dict.get("customize_instruct", None)
+    if customize_instruct is None:
+        response = mz_llama_cpp.llava_cpp_simple_interrogator(
+            model_file=model_file,
+            mmproj_file=mmproj_file, 
+            image=image,
+            options=options,
+        )
+    else:
 
+        system_prompt = customize_instruct.get("system", "")
+        question = customize_instruct.get("instruct", "{text}")
+        system_prompt = system_prompt.replace("{text}", "")
+        question = question.replace("{text}", "")
 
-    response = mz_llama_cpp.llava_cpp_simple_interrogator(
-        model_file=model_file,
-        mmproj_file=mmproj_file, 
-        image=image,
-        options=options,
-    )
+        full_response = mz_llama_cpp.llava_cpp_simple_interrogator(
+            model_file=model_file,
+            mmproj_file=mmproj_file, 
+            image=image,
+            system=system_prompt,
+            question=question,
+            options=options,
+        )
+
+        
+        start_str = customize_instruct.get("start_str", "") 
+        if start_str != "" and full_response.find(start_str) != -1:
+            full_response_list = full_response.split(start_str)
+            # 删除第一个元素
+            full_response_list.pop(0)
+            full_response = start_str.join(full_response_list)
+        end_str = customize_instruct.get("end_str", "")
+        if end_str != "" and full_response.find(end_str) != -1:
+            full_response_list = full_response.split(end_str)
+            # 删除最后一个元素
+            full_response_list.pop()
+            full_response = end_str.join(full_response_list)
+            
 
  
 
     sd_format = args_dict.get("sd_format", "v1")
-    if sd_format == "v1":
+    if sd_format == "v1" and customize_instruct is None:
         
         mz_prompt_utils.Utils.print_log(f"response: {response}")
     
