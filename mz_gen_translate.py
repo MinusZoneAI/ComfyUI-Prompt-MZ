@@ -83,3 +83,7 @@ def gen_translate(NODE_DISPLAY_NAME_MAPPINGS={}, NODE_CLASS_MAPPINGS={}):
 
             with open(translation_config, "w", encoding="utf-8") as f:
                 f.write(json.dumps(nodes, indent=4, ensure_ascii=False))
+
+
+    else:
+        print("No translation dir found.")
