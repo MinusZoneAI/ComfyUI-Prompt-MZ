@@ -173,7 +173,8 @@ def base_image_interrogator(args_dict):
             # 删除最后一个元素
             full_response_list.pop()
             full_response = end_str.join(full_response_list)
-            
+        
+        response = full_response
 
  
 
