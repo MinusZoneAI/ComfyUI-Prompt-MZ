@@ -482,19 +482,22 @@ def base_query_beautify_prompt_text(args_dict):
             mz_prompt_utils.Utils.print_log(f"question: {question}")
 
 
-        response_json = llama_cpp_simple_interrogator_to_json(
-            model_file=model_file, 
-            system=system_prompt,
-            question=question,
-            schema=schema,
-            options=options,
-        ) 
-        mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
-        if keep_device is False:
-            freed_gpu_memory(model_file=model_file)
+        
 
 
         if schema is not None:
+
+            response_json = llama_cpp_simple_interrogator_to_json(
+                model_file=model_file, 
+                system=system_prompt,
+                question=question,
+                schema=schema,
+                options=options,
+            ) 
+            mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
+            if keep_device is False:
+                freed_gpu_memory(model_file=model_file)
+
             response = json.loads(response_json)
             full_responses = []
 
@@ -525,7 +528,13 @@ def base_query_beautify_prompt_text(args_dict):
 
             full_response = ", ".join(full_responses)
         else:
-            full_response = response_json
+            full_response = llama_cpp_simple_interrogator(
+                model_file=model_file, 
+                system=system_prompt,
+                question=question,
+                options=options,
+            )
+
 
         
         # 去除换行
