@@ -93,8 +93,8 @@ class MZ_CustomizeInstruct:
     FUNCTION = "create"
     CATEGORY = CATEGORY_NAME
 
-    def create(self, system, instruct, prefix, suffix):
-        return ({"system": system, "instruct": instruct},)
+    def create(self, **kwargs):
+        return (kwargs,)
 
 NODE_CLASS_MAPPINGS["MZ_CustomizeInstruct"] = MZ_CustomizeInstruct
 NODE_DISPLAY_NAME_MAPPINGS["MZ_CustomizeInstruct"] = f"{AUTHOR_NAME} - CustomizeInstruct"
