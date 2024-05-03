@@ -47,6 +47,9 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 
 ## FAQ
 
+### moudle 'llama_cpp' has no attribute 'LLAMA_SPLIT_MODE_LAYER'
+升级llama_cpp_python的版本到最新版本,前往 https://github.com/abetlen/llama-cpp-python/releases 下载安装
+
 ### LLama.dll 无法加载 (Failed to load shared library LLama.dll)
 CUDA版本切换到12.1,如果你使用秋叶启动器,高级设置->环境维护->安装PyTorch->选择版本中选择CUDA 12.1的版本
 
