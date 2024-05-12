@@ -147,9 +147,9 @@ def base_image_interrogator(args_dict):
     else:
 
         system_prompt = customize_instruct.get("system", "")
-        question = customize_instruct.get("instruct", "{text}")
-        system_prompt = system_prompt.replace("{text}", "")
-        question = question.replace("{text}", "")
+        question = customize_instruct.get("instruct", "%text%")
+        system_prompt = system_prompt.replace("%text%", "")
+        question = question.replace("%text%", "")
 
         full_response = mz_llama_cpp.llava_cpp_simple_interrogator(
             model_file=model_file,

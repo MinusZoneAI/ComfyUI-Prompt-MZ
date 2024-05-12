@@ -7,6 +7,7 @@
 Use llama.cpp to assist in generating some nodes related to prompt words, including beautifying prompt words and image recognition similar to clip-interrogator
 
 ## Recent changes
+* [2024-05-13] 新增OpenAI API节点 (add OpenAI API node)
 * [2024-04-30] 支持自定义指令 (Support for custom instructions)
 * [2024-04-30] 添加llava-v1.6-vicuna-13b (add llava-v1.6-vicuna-13b)
 * [2024-04-30] 添加翻译
@@ -17,6 +18,8 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 2. Restart ComfyUI.
  
 ## Nodes
++ CLIPTextEncode (OpenAI API)
+
 + CLIPTextEncode (Phi-3)
 
   ![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/c4b97aeb-23c0-4cf1-a6a5-d259fdf83f6e)

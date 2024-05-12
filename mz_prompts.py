@@ -12,7 +12,7 @@ Below is a list of prompts that can be used to generate images with Stable Diffu
 I want you to write me a list of detailed prompts exactly about the idea written after IDEA. Follow the structure of the example prompts. This means a very short description of the scene, followed by modifiers divided by commas to alter the mood, style, lighting, and more.
 """
  
-Long_prompt = "Long prompt version should consist of 3 to 5 sentences. Long prompt version must sepcify the color, shape, texture or spatial relation of the included objects. DO NOT generate sentences that describe any atmosphere!!!"
+Long_prompt = "Long prompt version should consist of 3 to 5 sentences. Long prompt version must sepcify the color, shape, texture or spatial relation of the included objects. DO NOT generate sentences that describe any atmosphere!!!  The language of reply is English only!!!"
 
 Standardize_Prompt = """
 Extract the content about Stable Diffusion style from the following input and combine it into a json array. Note that the output will be directly used in the program. 

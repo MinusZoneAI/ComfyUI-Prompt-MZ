@@ -82,7 +82,7 @@ class MZ_CustomizeInstruct:
         return {
             "required": {
                 "system": ("STRING", {"multiline": True, "default": mz_prompts.Long_prompt}),
-                "instruct": ("STRING", {"multiline": True, "default": "Short: {text}"}),
+                "instruct": ("STRING", {"multiline": True, "default": "Short: %text%"}),
                 "start_str": ("STRING", {"default": "Long: "}),
                 "end_str": ("STRING", {"default": ""}),
             },
@@ -96,8 +96,10 @@ class MZ_CustomizeInstruct:
     def create(self, **kwargs):
         return (kwargs,)
 
+
 NODE_CLASS_MAPPINGS["MZ_CustomizeInstruct"] = MZ_CustomizeInstruct
 NODE_DISPLAY_NAME_MAPPINGS["MZ_CustomizeInstruct"] = f"{AUTHOR_NAME} - CustomizeInstruct"
+
 
 def getCommonCLIPTextEncodeInput():
     style_presets = mz_llama_cpp.get_style_presets()
@@ -115,6 +117,7 @@ def getCommonCLIPTextEncodeInput():
             "clip": ("CLIP", ),
             "llama_cpp_options": ("LLamaCPPOptions", ),
             "customize_instruct": ("CustomizeInstruct", ),
+            # "customize_json_schema": ("STRING", ),
         }
     }
 
@@ -418,6 +421,55 @@ class MZ_LLamaCPPInterrogator:
 
 # NODE_CLASS_MAPPINGS["MZ_LLamaCPPInterrogator"] = MZ_LLamaCPPInterrogator
 # NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPInterrogator"] = f"{AUTHOR_NAME} - LLamaCPP simple interrogator"
+
+
+class MZ_OpenAIApiCLIPTextEncode:
+    @classmethod
+    def INPUT_TYPES(s):
+        importlib.reload(mz_llama_cpp)
+
+        result = {
+            "required": {
+                "base_url": ("STRING", {"default": ""}),
+                "api_key": ("STRING", {"default": "", "placeholder": ""}),
+                "model_name": ("STRING", {"default": "gpt-3.5-turbo-1106"}),
+            },
+            "optional": {
+            },
+        }
+
+        common_input = getCommonCLIPTextEncodeInput()
+        for key in common_input["required"]:
+            result["required"][key] = common_input["required"][key]
+        for key in common_input["optional"]:
+            if key != "llama_cpp_options":
+                result["optional"][key] = common_input["optional"][key]
+
+        return result
+    RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+
+    def encode(self, **kwargs):
+        import mz_openaiapi
+
+        importlib.reload(mz_openaiapi)
+
+        text = mz_openaiapi.query_beautify_prompt_text(kwargs)
+        conditionings = None
+        clip = kwargs.get("clip", None)
+        if clip is not None:
+            tokens = clip.tokenize(text)
+            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
+            conditionings = [[cond, {"pooled_output": pooled}]]
+
+        return (text, conditionings)
+
+
+NODE_CLASS_MAPPINGS["MZ_OpenAIApiCLIPTextEncode"] = MZ_OpenAIApiCLIPTextEncode
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_OpenAIApiCLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(OpenAIApi)"
 
 
 import mz_gen_translate

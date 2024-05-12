@@ -473,10 +473,10 @@ def base_query_beautify_prompt_text(args_dict):
         else:
 
             system_prompt = customize_instruct.get("system", "")
-            question = customize_instruct.get("instruct", "{text}")
+            question = customize_instruct.get("instruct", "%text%")
 
-            system_prompt = system_prompt.replace("{text}", text)
-            question = question.replace("{text}", text)
+            system_prompt = system_prompt.replace("%text%", text)
+            question = question.replace("%text%", text)
 
             mz_prompt_utils.Utils.print_log(f"system_prompt: {system_prompt}")
             mz_prompt_utils.Utils.print_log(f"question: {question}")
