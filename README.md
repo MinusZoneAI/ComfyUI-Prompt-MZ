@@ -20,6 +20,9 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 ## Nodes
 + CLIPTextEncode (OpenAI API)
 
+  ![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/b7e80e7f-93be-414f-bd9f-2c5186ad1ff0)
+
+
 + CLIPTextEncode (Phi-3)
 
   ![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/c4b97aeb-23c0-4cf1-a6a5-d259fdf83f6e)
