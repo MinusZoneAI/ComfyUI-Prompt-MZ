@@ -440,7 +440,8 @@ class MZ_OpenAIApiCLIPTextEncode:
 
         common_input = getCommonCLIPTextEncodeInput()
         for key in common_input["required"]:
-            result["required"][key] = common_input["required"][key]
+            if key not in ["seed", "keep_device"]:
+                result["required"][key] = common_input["required"][key]
         for key in common_input["optional"]:
             if key != "llama_cpp_options":
                 result["optional"][key] = common_input["optional"][key]
