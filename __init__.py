@@ -9,8 +9,8 @@ import shutil
 import comfy.samplers
 
 
-AUTHOR_NAME = u"[MinusZone]"
-CATEGORY_NAME = f"{AUTHOR_NAME} Utils"
+AUTHOR_NAME = u"MinusZone"
+CATEGORY_NAME = f"{AUTHOR_NAME} - Prompt"
 
 sys.path.append(os.path.join(os.path.dirname(__file__)))
 
