@@ -172,9 +172,7 @@ class MZ_LLama3CLIPTextEncode:
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
-            tokens = clip.tokenize(text)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
-            conditionings = [[cond, {"pooled_output": pooled}]]
+            conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
         return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
@@ -229,9 +227,7 @@ class MZ_Phi3CLIPTextEncode:
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
-            tokens = clip.tokenize(text)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
-            conditionings = [[cond, {"pooled_output": pooled}]]
+            conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
         return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
@@ -277,9 +273,7 @@ class MZ_BaseLLamaCPPCLIPTextEncode:
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
-            tokens = clip.tokenize(text)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
-            conditionings = [[cond, {"pooled_output": pooled}]]
+            conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
         return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
@@ -345,9 +339,8 @@ class MZ_LLavaImageInterrogator:
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
-            tokens = clip.tokenize(text)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
-            conditionings = [[cond, {"pooled_output": pooled}]]
+            conditionings = Utils.a1111_clip_text_encode(clip, text, )
+
         return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
@@ -388,9 +381,8 @@ class MZ_BaseLLavaImageInterrogator:
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
-            tokens = clip.tokenize(text)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
-            conditionings = [[cond, {"pooled_output": pooled}]]
+            conditionings = Utils.a1111_clip_text_encode(clip, text, )
+            
         return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
@@ -475,9 +467,7 @@ class MZ_OpenAIApiCLIPTextEncode:
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
-            tokens = clip.tokenize(text)
-            cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
-            conditionings = [[cond, {"pooled_output": pooled}]]
+            conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
         return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 

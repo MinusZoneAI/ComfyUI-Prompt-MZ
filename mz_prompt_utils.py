@@ -145,6 +145,12 @@ class Utils:
         cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True)
         return [[cond, {"pooled_output": pooled}]]
 
+    def a1111_clip_text_encode(clip, text):
+        from . import ADV_CLIP_emb_encode
+        cond, pooled = ADV_CLIP_emb_encode.advanced_encode(
+            clip, text, "none", "A1111", w_max=1.0, apply_to_pooled=False)
+        return [[cond, {"pooled_output": pooled}]]
+
     def cache_get(key):
         return CACHE_POOL.get(key, None)
 
