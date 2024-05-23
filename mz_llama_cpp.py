@@ -1,6 +1,6 @@
 import importlib
 import json
-import os 
+import os
 import shutil
 import subprocess
 import sys
@@ -9,7 +9,7 @@ try:
     import mz_prompt_utils
 except ImportError:
     pass
-  
+
 
 def LlamaCppOptions():
     return {
@@ -17,11 +17,11 @@ def LlamaCppOptions():
         "n_batch": 2048,
         "n_threads": 0,
         "n_threads_batch": 0,
-        "split_mode":["LLAMA_SPLIT_MODE_NONE","LLAMA_SPLIT_MODE_LAYER", "LLAMA_SPLIT_MODE_ROW",],
+        "split_mode": ["LLAMA_SPLIT_MODE_NONE", "LLAMA_SPLIT_MODE_LAYER", "LLAMA_SPLIT_MODE_ROW",],
         "main_gpu": 0,
         "n_gpu_layers": -1,
 
-        
+
         "max_tokens": 4096,
         "temperature": 1.6,
         "top_p": 0.95,
@@ -38,7 +38,8 @@ def LlamaCppOptions():
         "mirostat_eta": 0.1,
     }
 
-def check_llama_cpp_requirements(): 
+
+def check_llama_cpp_requirements():
     last_version = "0.2.63"
     try:
         from llama_cpp import Llama
@@ -53,14 +54,16 @@ def check_llama_cpp_requirements():
                 py_version = "312"
 
         if py_version == "":
-            raise ValueError(f"Please upgrade python to version 3.10 or above. (找不到对应的python版本) 当前版本:{sys.version_info.major}.{sys.version_info.minor}")
+            raise ValueError(
+                f"Please upgrade python to version 3.10 or above. (找不到对应的python版本) 当前版本:{sys.version_info.major}.{sys.version_info.minor}")
 
         cuda_version = ""
         if torch.cuda.is_available():
-            cuda_version = "cu" + torch.version.cuda.replace(".", "") 
+            cuda_version = "cu" + torch.version.cuda.replace(".", "")
             if cuda_version not in ["cu121", "cu122", "cu123"]:
                 cuda_version = "cu121"
-                print(f"Warning: The current version of cuda is not supported. (警告: 当前cuda版本不支持) {torch.version.cuda} (默认使用cu121)")
+                print(
+                    f"Warning: The current version of cuda is not supported. (警告: 当前cuda版本不支持) {torch.version.cuda} (默认使用cu121)")
         else:
             cuda_version = "cpu"
 
@@ -74,11 +77,13 @@ def check_llama_cpp_requirements():
                 system_name = "linux_i686"
         elif sys.platform == "darwin":
             # 请手动前往https://github.com/abetlen/llama-cpp-python/releases 下载对应的whl文件后 使用pip install {whl文件路径}安装
-            raise ValueError("Please download the corresponding whl file from https://github.com/abetlen/llama-cpp-python/releases and install it using pip install {whl file path} (请手动前往https://github.com/abetlen/llama-cpp-python/releases 下载对应的whl文件后 使用pip install {whl文件路径}安装)")
+            raise ValueError(
+                "Please download the corresponding whl file from https://github.com/abetlen/llama-cpp-python/releases and install it using pip install {whl file path} (请手动前往https://github.com/abetlen/llama-cpp-python/releases 下载对应的whl文件后 使用pip install {whl文件路径}安装)")
         elif sys.platform == "win32":
             system_name = "win_amd64"
         else:
-            raise ValueError(f"Unsupported platform. (不支持的平台) {sys.platform} (请手动前往https://github.com/abetlen/llama-cpp-python/releases 下载对应的whl文件后 使用pip install 'whl文件路径' 安装)")
+            raise ValueError(
+                f"Unsupported platform. (不支持的平台) {sys.platform} (请手动前往https://github.com/abetlen/llama-cpp-python/releases 下载对应的whl文件后 使用pip install 'whl文件路径' 安装)")
 
         wheel_name = f"llama_cpp_python-{last_version}-cp{py_version}-cp{py_version}-{system_name}.whl"
         if cuda_version == "cpu":
@@ -90,29 +95,30 @@ def check_llama_cpp_requirements():
         ret = subprocess.run([
             sys.executable, "-m",
             "pip", "install", wheel_url], check=True)
-        
+
         if ret.returncode != 0:
             raise ValueError("Failed to install llama_cpp. (安装llama_cpp失败)")
-        else: 
+        else:
             print("llama_cpp installed successfully. (llama_cpp安装成功)")
-        
-
 
 
 def freed_gpu_memory(model_file):
-    check_llama_cpp_requirements()  
-    
-    model_and_opt = mz_prompt_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
+    check_llama_cpp_requirements()
+
+    model_and_opt = mz_prompt_utils.Utils.cache_get(
+        f"llama_cpp_model_and_opt_{model_file}")
 
     if model_and_opt is None:
         return 0
-    
+
     model = model_and_opt.get("model")
 
     del model
     torch.cuda.empty_cache()
 
-    mz_prompt_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", None)
+    mz_prompt_utils.Utils.cache_set(
+        f"llama_cpp_model_and_opt_{model_file}", None)
+
 
 def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     if options is None:
@@ -125,9 +131,9 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     from llama_cpp import Llama
     import llama_cpp
 
-    model_and_opt = mz_prompt_utils.Utils.cache_get(f"llama_cpp_model_and_opt_{model_file}")
-    
-    
+    model_and_opt = mz_prompt_utils.Utils.cache_get(
+        f"llama_cpp_model_and_opt_{model_file}")
+
     is_opts_changed = False
 
     if model_and_opt is not None:
@@ -135,7 +141,6 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
             if model_and_opt.get("options").get(opt) != options.get(opt):
                 is_opts_changed = True
                 break
-         
 
     if model_and_opt is None or is_opts_changed:
         print("llama_cpp: loading model...")
@@ -143,21 +148,21 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
         if os.environ.get("MZ_DEV", None) is not None:
             verbose = True
 
-        
         split_mode_int = llama_cpp.LLAMA_SPLIT_MODE_LAYER
         if options.get("split_mode", "LLAMA_SPLIT_MODE_LAYER") == "LLAMA_SPLIT_MODE_ROW":
             split_mode_int = llama_cpp.LLAMA_SPLIT_MODE_ROW
         elif options.get("split_mode", "LLAMA_SPLIT_MODE_LAYER") == "LLAMA_SPLIT_MODE_NONE":
             split_mode_int = llama_cpp.LLAMA_SPLIT_MODE_NONE
-        
-        
+
         model = Llama(
-            model_path=model_file, 
+            model_path=model_file,
             n_gpu_layers=options.get("n_gpu_layers", -1),
             n_ctx=options.get("n_ctx", 2048),
             n_batch=options.get("n_batch", 2048),
-            n_threads=options.get("n_threads", 0) if options.get("n_threads", 0) > 0 else None,
-            n_threads_batch=options.get("n_threads_batch", 0) if options.get("n_threads_batch", 0) > 0 else None,
+            n_threads=options.get("n_threads", 0) if options.get(
+                "n_threads", 0) > 0 else None,
+            n_threads_batch=options.get("n_threads_batch", 0) if options.get(
+                "n_threads_batch", 0) > 0 else None,
             main_gpu=options.get("main_gpu", 0),
             split_mode=split_mode_int,
             logits_all=options.get("logits_all", False),
@@ -165,24 +170,23 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
             chat_format=options.get("chat_format", None),
             seed=options.get("seed", -1),
             verbose=verbose,
-        )   
+        )
         model_and_opt = {
             "model": model,
             "options": options,
         }
-        mz_prompt_utils.Utils.cache_set(f"llama_cpp_model_and_opt_{model_file}", model_and_opt)
+        mz_prompt_utils.Utils.cache_set(
+            f"llama_cpp_model_and_opt_{model_file}", model_and_opt)
 
-    
     model = model_and_opt.get("model")
 
-
     response_format = options.get("response_format", None)
-    mz_prompt_utils.Utils.print_log(f"======================================================LLAMA_CPP======================================================")
-    # mz_utils.Utils.print_log("llama_cpp messages:", messages) 
-    mz_prompt_utils.Utils.print_log("llama_cpp response_format:", response_format) 
+    mz_prompt_utils.Utils.print_log(
+        f"======================================================LLAMA_CPP======================================================")
+    # mz_utils.Utils.print_log("llama_cpp messages:", messages)
+    mz_prompt_utils.Utils.print_log(
+        "llama_cpp response_format:", response_format)
 
-
-     
     stop = options.get("stop", "")
     if stop == "":
         stop = []
@@ -198,7 +202,7 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
         for key, value in escape_sequence.items():
             stop = stop.replace(key, value)
         stop = stop.split(",")
-    
+
     mirostat_mode = 0
     if options.get("mirostat_mode", "none") == "mirostat":
         mirostat_mode = 1
@@ -227,14 +231,16 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     # mz_utils.Utils.print_log(f"LLAMA_CPP choices: \n{choices}")
     if len(choices) == 0:
         return ""
-    
+
     result = choices[0].get("message", {}).get("content", "")
     return result
+
 
 def get_schema_base_type(t):
     return {
         "type": t,
     }
+
 
 def get_schema_obj(keys_type={}, required=[]):
     item = {}
@@ -248,6 +254,7 @@ def get_schema_obj(keys_type={}, required=[]):
         "required": required
     }
 
+
 def get_schema_array(item_type="string"):
     if type(item_type) == str:
         item_type = get_schema_base_type(item_type)
@@ -255,7 +262,6 @@ def get_schema_array(item_type="string"):
         "type": "array",
         "items": item_type,
     }
-
 
 
 def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=None, question="", schema={}, options={}):
@@ -297,16 +303,16 @@ def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=No
     response_format = {
         "type": "json_object",
         "schema": schema,
-    } 
-
+    }
 
     options["response_format"] = response_format
-    options["chat_format"] = "chatml" 
+    options["chat_format"] = "chatml"
 
     result = llama_cpp_messages(model_file, None, messages, options=options)
     result = result.replace("\n", " ")
     return result
-    
+
+
 def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, question="", options={}):
     if options is None:
         options = {}
@@ -351,17 +357,15 @@ def llava_cpp_messages(model_file, chat_handler, messages, options={}):
     if options is None:
         options = {}
     options["logits_all"] = True
-    options["n_ctx"] = max(4096, options.get("n_ctx", 4096)) 
+    options["n_ctx"] = max(4096, options.get("n_ctx", 4096))
     return llama_cpp_messages(model_file, chat_handler, messages, options)
 
- 
 
 def llava_cpp_simple_interrogator(
-        model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please.", 
+        model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please.",
         image=None, options={}):
     if options is None:
         options = {}
-
 
     check_llama_cpp_requirements()
 
@@ -369,11 +373,11 @@ def llava_cpp_simple_interrogator(
     if image is not None:
         data_uri = mz_prompt_utils.Utils.pil_image_to_base64(image)
         content.append({"type": "image_url", "image_url": {"url": data_uri}})
-        
-    content.append({"type" : "text", "text": question})
-        
+
+    content.append({"type": "text", "text": question})
+
     check_llama_cpp_requirements()
-    from llama_cpp.llama_chat_format import Llava15ChatHandler  
+    from llama_cpp.llama_chat_format import Llava15ChatHandler
     if mmproj_file is not None:
         chat_handler = Llava15ChatHandler(clip_model_path=mmproj_file)
 
@@ -385,20 +389,20 @@ def llava_cpp_simple_interrogator(
         {
             "role": "user",
             "content": content,
-        }, 
+        },
     ], options=options)
 
 
 def llava_cpp_simple_interrogator_to_json(
-        model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please\nuse json format for output:", 
+        model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please\nuse json format for output:",
         image=None, schema={}, options={}):
-    
+
     response_format = {
         "type": "json_object",
         "schema": schema,
-    } 
+    }
     options["response_format"] = response_format
-    options["chat_format"] = "chatml" 
+    options["chat_format"] = "chatml"
 
     result = llava_cpp_simple_interrogator(
         model_file, mmproj_file, system=system, question=question, image=image, options=options)
@@ -412,33 +416,34 @@ style_presets_prompt = {
     "photography": f"{high_quality_prompt}, (RAW photo, best quality), (realistic, photo-realistic:1.2), (bokeh, cinematic shot, dynamic composition, incredibly detailed, sharpen, details, intricate detail, professional lighting, film lighting, 35mm, anamorphic, lightroom, cinematography, bokeh, lens flare, film grain, HDR10, 8K)",
     "illustration": f"{high_quality_prompt}, ((detailed matte painting, intricate detail, splash screen, complementary colors), (detailed),(intricate details),illustration,an extremely delicate and beautiful,ultra-detailed,highres,extremely detailed)",
 }
+
+
 def get_style_presets():
     return [
         "none",
         "high_quality",
         "photography",
-        "illustration",  
+        "illustration",
     ]
 
 
-def base_query_beautify_prompt_text(args_dict):     
-    model_file = args_dict.get("llama_cpp_model", "")  
+def base_query_beautify_prompt_text(args_dict):
+    model_file = args_dict.get("llama_cpp_model", "")
 
     text = args_dict.get("text", "")
     style_presets = args_dict.get("style_presets", "")
     options = args_dict.get("llama_cpp_options", {})
     keep_device = args_dict.get("keep_device", False)
-    seed = args_dict.get("seed", -1) 
+    seed = args_dict.get("seed", -1)
     options["seed"] = seed
 
-
     import mz_prompts
-    importlib.reload(mz_prompts) 
-
+    importlib.reload(mz_prompts)
 
     customize_instruct = args_dict.get("customize_instruct", None)
-    mz_prompt_utils.Utils.print_log(f"customize_instruct: {customize_instruct}")
-    try: 
+    mz_prompt_utils.Utils.print_log(
+        f"customize_instruct: {customize_instruct}")
+    try:
         schema = None
         if customize_instruct is None:
             schema = get_schema_obj(
@@ -463,7 +468,7 @@ def base_query_beautify_prompt_text(args_dict):
                     "environment_words",
                 ]
             )
-    
+
             question = f"IDEA: {style_presets},{text}"
             if style_presets == "none":
                 question = f"IDEA: {text}"
@@ -481,16 +486,15 @@ def base_query_beautify_prompt_text(args_dict):
             mz_prompt_utils.Utils.print_log(f"system_prompt: {system_prompt}")
             mz_prompt_utils.Utils.print_log(f"question: {question}")
 
-
         if schema is not None:
             response_json = llama_cpp_simple_interrogator_to_json(
-                model_file=model_file, 
+                model_file=model_file,
                 system=system_prompt,
                 question=question,
                 schema=schema,
                 options=options,
-            ) 
-            mz_prompt_utils.Utils.print_log(f"response_json: {response_json}") 
+            )
+            mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
 
             response = json.loads(response_json)
             full_responses = []
@@ -503,33 +507,41 @@ def base_query_beautify_prompt_text(args_dict):
                 full_responses.append(f"({response['main_color_word']})")
             if response["camera_angle_word"] != "":
                 full_responses.append(f"({response['camera_angle_word']})")
-            
-            response["style_words"] = [x for x in response["style_words"] if x != ""]
+
+            response["style_words"] = [
+                x for x in response["style_words"] if x != ""]
             if len(response["style_words"]) > 0:
-                full_responses.append(f"({', '.join(response['style_words'])})")
+                full_responses.append(
+                    f"({', '.join(response['style_words'])})")
 
-            response["subject_words"] = [x for x in response["subject_words"] if x != ""]
+            response["subject_words"] = [
+                x for x in response["subject_words"] if x != ""]
             if len(response["subject_words"]) > 0:
-                full_responses.append(f"({', '.join(response['subject_words'])})")
+                full_responses.append(
+                    f"({', '.join(response['subject_words'])})")
 
-            response["light_words"] = [x for x in response["light_words"] if x != ""]
+            response["light_words"] = [
+                x for x in response["light_words"] if x != ""]
             if len(response["light_words"]) > 0:
-                full_responses.append(f"({', '.join(response['light_words'])})")
+                full_responses.append(
+                    f"({', '.join(response['light_words'])})")
 
-            response["environment_words"] = [x for x in response["environment_words"] if x != ""]
+            response["environment_words"] = [
+                x for x in response["environment_words"] if x != ""]
             if len(response["environment_words"]) > 0:
-                full_responses.append(f"({', '.join(response['environment_words'])})")
+                full_responses.append(
+                    f"({', '.join(response['environment_words'])})")
 
             full_response = ", ".join(full_responses)
         else:
             full_response = llama_cpp_simple_interrogator(
-                model_file=model_file, 
+                model_file=model_file,
                 system=system_prompt,
                 question=question,
                 options=options,
             )
 
-            start_str = customize_instruct.get("start_str", "") 
+            start_str = customize_instruct.get("start_str", "")
             if start_str != "" and full_response.find(start_str) != -1:
                 full_response_list = full_response.split(start_str)
                 # 删除第一个元素
@@ -542,7 +554,6 @@ def base_query_beautify_prompt_text(args_dict):
                 # 删除最后一个元素
                 full_response_list.pop()
                 full_response = end_str.join(full_response_list)
-
 
         if keep_device is False:
             freed_gpu_memory(model_file=model_file)
@@ -561,7 +572,7 @@ def base_query_beautify_prompt_text(args_dict):
         while full_response.find(", ,") != -1:
             full_response = full_response.replace(", ,", ",")
 
-        full_response = mz_prompt_utils.Utils.prompt_zh_to_en(full_response) 
+        full_response = mz_prompt_utils.Utils.prompt_zh_to_en(full_response)
 
         style_presets_prompt_text = style_presets_prompt.get(style_presets, "")
 
@@ -574,4 +585,43 @@ def base_query_beautify_prompt_text(args_dict):
         freed_gpu_memory(model_file=model_file)
         # mz_utils.Utils.print_log(f"Error in auto_prompt_text: {e}")
         raise e
- 
+
+
+def get_image_composition_json_schema():
+    system = "Please make a specific composition of the proposed content. You need to have the width and height of the overall picture and a list of specific element positions."
+    return system, {
+        "type": "object",
+        "properties": {
+            "width": {
+                "type": "number"
+            },
+            "height": {
+                "type": "number"
+            },
+            "bbox": {
+                "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "english_name": {
+                                    "type": "string"
+                                },
+                                "left": {
+                                    "type": "number"
+                                },
+                                "top": {
+                                    "type": "number"
+                                },
+                                "width": {
+                                    "type": "number"
+                                },
+                                "height": {
+                                    "type": "number"
+                                }
+                            },
+                            "required": ["english_name", "left", "top", "width", "height"]
+                        }
+            }
+        },
+        "required": ["width", "height", "bbox"]
+    }

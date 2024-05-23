@@ -42,7 +42,6 @@ def query_beautify_prompt_text(args_dict):
     customize_instruct = args_dict.get("customize_instruct", None)
     mz_prompt_utils.Utils.print_log(
         f"customize_instruct: {customize_instruct}")
-        
 
     schema = None
     if customize_instruct is None:
@@ -78,8 +77,8 @@ def query_beautify_prompt_text(args_dict):
     else:
 
         system_prompt = customize_instruct.get("system", "")
-        question = customize_instruct.get("instruct", "%text%") \
-        
+        question = customize_instruct.get("instruct", "%text%")
+
         system_prompt = system_prompt.replace("%text%", text)
         question = question.replace("%text%", text)
 
@@ -110,12 +109,11 @@ def query_beautify_prompt_text(args_dict):
         )
         tool_calls = output.choices[0].message.tool_calls
 
-
         functions_args = {}
         for tool_call in tool_calls:
             function_name = tool_call.function.name
             function_args = json.loads(tool_call.function.arguments)
-            functions_args[function_name] = function_args 
+            functions_args[function_name] = function_args
         beautify_prompt_text_result = functions_args.get(
             "beautify_prompt_text", {})
 
@@ -124,7 +122,7 @@ def query_beautify_prompt_text(args_dict):
             if type(value) == list:
                 value = [item for item in value if item != ""]
                 value = [mz_prompt_utils.Utils.prompt_zh_to_en(item)
-                        for item in value]
+                         for item in value]
                 if len(value) == 0:
                     continue
                 item_str = ", ".join(value)
@@ -152,7 +150,6 @@ def query_beautify_prompt_text(args_dict):
         f"OPENAI_OUTPUT: \n{output.model_dump_json()}")
     # print(output.model_dump_json())
 
-    
     # 去除换行
     while full_response.find("\n") != -1:
         full_response = full_response.replace("\n", " ")

@@ -1,5 +1,6 @@
 
 
+import json
 import os
 import sys
 from .mz_prompt_utils import Utils
@@ -428,11 +429,27 @@ class MZ_OpenAIApiCLIPTextEncode:
     def INPUT_TYPES(s):
         importlib.reload(mz_llama_cpp)
 
+        s.openai_config_path = os.path.join(
+            Utils.get_models_path(),
+            "openai_config.json",
+        )
+        default_config = {
+            "base_url": "",
+            "api_key": "",
+            "model_name": "gpt-3.5-turbo-1106",
+        }
+        if os.path.exists(s.openai_config_path):
+            try:
+                with open(s.openai_config_path, "r", encoding="utf-8") as f:
+                    default_config = json.load(f)
+            except Exception as e:
+                print(f"Failed to load openai_config.json: {e}")
+
         result = {
             "required": {
-                "base_url": ("STRING", {"default": ""}),
-                "api_key": ("STRING", {"default": "", "placeholder": ""}),
-                "model_name": ("STRING", {"default": "gpt-3.5-turbo-1106"}),
+                "base_url": ("STRING", {"default": default_config.get("base_url", ""), "placeholder": ""}),
+                "api_key": ("STRING", {"default": default_config.get("api_key", ""), "placeholder": ""}),
+                "model_name": ("STRING", {"default": default_config.get("model_name", ""), }),
             },
             "optional": {
             },
@@ -454,8 +471,14 @@ class MZ_OpenAIApiCLIPTextEncode:
 
     def encode(self, **kwargs):
         import mz_openaiapi
-
         importlib.reload(mz_openaiapi)
+
+        with open(self.openai_config_path, "w", encoding="utf-8") as f:
+            json.dump({
+                "base_url": kwargs.get("base_url", ""),
+                "api_key": kwargs.get("api_key", ""),
+                "model_name": kwargs.get("model_name", ""),
+            }, f, indent=4)
 
         text = mz_openaiapi.query_beautify_prompt_text(kwargs)
         conditionings = None
