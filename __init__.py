@@ -10,6 +10,8 @@ import shutil
 import comfy.samplers
 
 
+WEB_DIRECTORY = "./web"
+
 AUTHOR_NAME = u"MinusZone"
 CATEGORY_NAME = f"{AUTHOR_NAME} - Prompt"
 
@@ -156,6 +158,7 @@ class MZ_LLama3CLIPTextEncode:
 
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
 
@@ -173,7 +176,7 @@ class MZ_LLama3CLIPTextEncode:
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
             conditionings = [[cond, {"pooled_output": pooled}]]
 
-        return (text, conditionings)
+        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_LLama3CLIPTextEncode"] = MZ_LLama3CLIPTextEncode
@@ -212,6 +215,7 @@ class MZ_Phi3CLIPTextEncode:
 
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
 
@@ -229,7 +233,7 @@ class MZ_Phi3CLIPTextEncode:
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
             conditionings = [[cond, {"pooled_output": pooled}]]
 
-        return (text, conditionings)
+        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_Phi3CLIPTextEncode"] = MZ_Phi3CLIPTextEncode
@@ -259,6 +263,7 @@ class MZ_BaseLLamaCPPCLIPTextEncode:
         return result
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
 
@@ -276,7 +281,7 @@ class MZ_BaseLLamaCPPCLIPTextEncode:
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
             conditionings = [[cond, {"pooled_output": pooled}]]
 
-        return (text, conditionings)
+        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_BaseLLamaCPPCLIPTextEncode"] = MZ_BaseLLamaCPPCLIPTextEncode
@@ -322,6 +327,7 @@ class MZ_LLavaImageInterrogator:
         }}
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
 
@@ -335,14 +341,14 @@ class MZ_LLavaImageInterrogator:
 
         kwargs["image"] = Utils.tensor2pil(kwargs["image"])
 
-        response = mz_llava.image_interrogator(kwargs)
+        text = mz_llava.image_interrogator(kwargs)
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
-            tokens = clip.tokenize(response)
+            tokens = clip.tokenize(text)
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
             conditionings = [[cond, {"pooled_output": pooled}]]
-        return (response, conditionings)
+        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_LLavaImageInterrogator"] = MZ_LLavaImageInterrogator
@@ -369,6 +375,7 @@ class MZ_BaseLLavaImageInterrogator:
         }}
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
     FUNCTION = "interrogate"
     CATEGORY = CATEGORY_NAME
 
@@ -377,51 +384,19 @@ class MZ_BaseLLavaImageInterrogator:
 
         kwargs["image"] = Utils.tensor2pil(kwargs["image"])
 
-        response = mz_llava.base_image_interrogator(kwargs)
+        text = mz_llava.base_image_interrogator(kwargs)
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
-            tokens = clip.tokenize(response)
+            tokens = clip.tokenize(text)
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
             conditionings = [[cond, {"pooled_output": pooled}]]
-        return (response, conditionings)
+        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = MZ_BaseLLavaImageInterrogator
 NODE_DISPLAY_NAME_MAPPINGS[
     "MZ_BaseLLavaImageInterrogator"] = f"{AUTHOR_NAME} - ImageInterrogator(BaseLLava)"
-
-
-class MZ_LLamaCPPInterrogator:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "model_file": ("STRING", {"default": ""}),
-                "use_system": ([True, False], {"default": True}),
-                "system": ("STRING", {"multiline": True, "default": "You are a helpful assistant."}),
-                "prompt": ("STRING", {"multiline": True, }),
-                "n_gpu_layers": ("INT", {"default": -1, "min": -1, "max": 0xffffffffffffffff}),
-            },
-        }
-    RETURN_TYPES = ("STRING",)
-    RETURN_NAMES = ("text",)
-    FUNCTION = "simple_interrogator"
-    CATEGORY = CATEGORY_NAME
-
-    def simple_interrogator(self, model_file, prompt, use_system=True, system="You are a helpful assistant.", n_gpu_layers=-1):
-        importlib.reload(mz_llama_cpp)
-        result = mz_llama_cpp.llama_cpp_simple_interrogator(
-            model_file,
-            n_gpu_layers=n_gpu_layers,
-            use_system=use_system,
-            system=system,
-            question=prompt,
-        )
-        return (result,)
-
-# NODE_CLASS_MAPPINGS["MZ_LLamaCPPInterrogator"] = MZ_LLamaCPPInterrogator
-# NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPInterrogator"] = f"{AUTHOR_NAME} - LLamaCPP simple interrogator"
 
 
 class MZ_OpenAIApiCLIPTextEncode:
@@ -445,10 +420,13 @@ class MZ_OpenAIApiCLIPTextEncode:
             except Exception as e:
                 print(f"Failed to load openai_config.json: {e}")
 
+        default_api_key = default_config.get("api_key", "")
+        if default_api_key != "":
+            default_api_key = default_api_key[:4] + "******"
         result = {
             "required": {
                 "base_url": ("STRING", {"default": default_config.get("base_url", ""), "placeholder": ""}),
-                "api_key": ("STRING", {"default": default_config.get("api_key", ""), "placeholder": ""}),
+                "api_key": ("STRING", {"default": default_api_key, "placeholder": ""}),
                 "model_name": ("STRING", {"default": default_config.get("model_name", ""), }),
             },
             "optional": {
@@ -466,6 +444,7 @@ class MZ_OpenAIApiCLIPTextEncode:
         return result
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
 
@@ -473,12 +452,24 @@ class MZ_OpenAIApiCLIPTextEncode:
         import mz_openaiapi
         importlib.reload(mz_openaiapi)
 
-        with open(self.openai_config_path, "w", encoding="utf-8") as f:
-            json.dump({
-                "base_url": kwargs.get("base_url", ""),
-                "api_key": kwargs.get("api_key", ""),
-                "model_name": kwargs.get("model_name", ""),
-            }, f, indent=4)
+        if kwargs.get("api_key", "").endswith("******"):
+            kwargs["api_key"] = ""
+            try:
+                with open(self.openai_config_path, "r", encoding="utf-8") as f:
+                    config = json.load(f)
+                    kwargs["api_key"] = config.get("api_key", "")
+            except Exception as e:
+                print(f"Failed to load openai_config.json: {e}")
+
+        if kwargs.get("api_key", "") != "":
+            with open(self.openai_config_path, "w", encoding="utf-8") as f:
+                json.dump({
+                    "base_url": kwargs.get("base_url", ""),
+                    "api_key": kwargs.get("api_key", ""),
+                    "model_name": kwargs.get("model_name", ""),
+                }, f, indent=4)
+        else:
+            raise ValueError("api_key is required")
 
         text = mz_openaiapi.query_beautify_prompt_text(kwargs)
         conditionings = None
@@ -488,7 +479,7 @@ class MZ_OpenAIApiCLIPTextEncode:
             cond, pooled = clip.encode_from_tokens(tokens, return_pooled=True,)
             conditionings = [[cond, {"pooled_output": pooled}]]
 
-        return (text, conditionings)
+        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_OpenAIApiCLIPTextEncode"] = MZ_OpenAIApiCLIPTextEncode
