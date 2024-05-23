@@ -9,6 +9,6 @@ Repository = "https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ"
 #  Used by Comfy Registry https://comfyregistry.org
 
 [tool.comfy]
-PublisherId = ""
+PublisherId = "wailovet"
 DisplayName = "ComfyUI-Prompt-MZ"
 Icon = ""
