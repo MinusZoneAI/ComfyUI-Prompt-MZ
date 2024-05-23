@@ -8,6 +8,24 @@ import mz_llama_cpp
 import mz_prompts
 
 
+def zhipu_json_fix(input_data):
+    if type(input_data) == dict:
+        if "Items" in input_data:
+            return input_data["Items"]
+        else:
+            for key, value in input_data.items():
+                input_data[key] = zhipu_json_fix(value)
+            return input_data
+
+    elif type(input_data) == list:
+        for i in range(len(input_data)):
+            input_data[i] = zhipu_json_fix(input_data[i])
+        return input_data
+
+    else:
+        return input_data
+
+
 def query_beautify_prompt_text(args_dict):
     try:
         from openai import OpenAI
@@ -94,7 +112,7 @@ def query_beautify_prompt_text(args_dict):
             model=model_name,
             messages=[
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": question},
+                {"role": "user", "content": f"{question}\ncall beautify_prompt_text function to get the result."},
             ],
             tools=[{
                 "type": "function",
@@ -117,6 +135,11 @@ def query_beautify_prompt_text(args_dict):
         beautify_prompt_text_result = functions_args.get(
             "beautify_prompt_text", {})
 
+        mz_prompt_utils.Utils.print_log(
+            f"beautify_prompt_text_result: {beautify_prompt_text_result}")
+
+        beautify_prompt_text_result = zhipu_json_fix(
+            beautify_prompt_text_result)
         results = []
         for key, value in beautify_prompt_text_result.items():
             if type(value) == list:
