@@ -7,6 +7,9 @@
 Use llama.cpp to assist in generating some nodes related to prompt words, including beautifying prompt words and image recognition similar to clip-interrogator
 
 ## Recent changes
+* [2024-05-24] 运行后在当前节点显示生成的提示词 (Display the generated prompt words in the current node after running)
+* [2024-05-24] 兼容清华智谱API (Compatible with Zhipu API)
+* [2024-05-24] 使用A1111权重缩放,感谢ComfyUI_ADV_CLIP_emb (Use A1111 weight scaling, thanks to ComfyUI_ADV_CLIP_emb)
 * [2024-05-13] 新增OpenAI API节点 (add OpenAI API node)
 * [2024-04-30] 支持自定义指令 (Support for custom instructions)
 * [2024-04-30] 添加llava-v1.6-vicuna-13b (add llava-v1.6-vicuna-13b)
@@ -63,6 +66,14 @@ CUDA版本切换到12.1,如果你使用秋叶启动器,高级设置->环境维�
 
 ### ...llama_cpp_python-0,2.63-cp310-cp310-win_and64.whl returned nonzero exit status
 保持网络畅通,该上魔法上魔法,或者手动安装llama_cpp_python
+
+
+
+
+## Credits
++ [https://github.com/comfyanonymous/ComfyUI](https://github.com/comfyanonymous/ComfyUI)
++ [https://github.com/ggerganov/llama.cpp](https://github.com/ggerganov/llama.cpp)
++ [https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb](https://github.com/BlenderNeko/ComfyUI_ADV_CLIP_emb)
 
 ## Star History
 
