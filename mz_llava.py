@@ -6,7 +6,7 @@ import mz_llama_cpp
 import importlib
 
 import mz_prompts
-
+import mz_prompt_webserver
 
 LLava_models = [
     "llava-1.6-mistral-7b-gguf/llava-v1.6-mistral-7b.Q5_K_M.gguf",
@@ -65,6 +65,63 @@ def get_exist_model(model_name):
 
 
 def image_interrogator(args_dict):
+
+    captioner_config = args_dict.get("captioner_config", None)
+    if captioner_config is not None:
+        import PIL.Image as Image
+        directory = captioner_config.get("directory", None)
+        force_update = captioner_config.get("force_update", False)
+        caption_suffix = captioner_config.get("caption_suffix", "")
+
+        pre_images = []
+        for root, dirs, files in os.walk(directory):
+            for file in files:
+                if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
+                    image_path = os.path.join(root, file)
+                    base_file_path = os.path.splitext(image_path)[0]
+                    caption_file = os.path.join(
+                        root, base_file_path + caption_suffix)
+                    if os.path.exists(caption_file) and force_update is False:
+                        continue
+
+                    pre_images.append({
+                        "image_path": image_path,
+                        "caption_path": caption_file
+                    })
+
+        result = []
+        for i in range(len(pre_images)):
+            pre_image = pre_images[i]
+            image_path = pre_image["image_path"]
+            caption_file = pre_image["caption_path"]
+
+            onec_args_dict = args_dict.copy()
+            del onec_args_dict["captioner_config"]
+
+            pil_image = Image.open(image_path)
+            onec_args_dict["image"] = pil_image
+
+            if i < len(pre_images) - 1:
+                onec_args_dict["keep_device"] = True
+
+            mz_prompt_webserver.show_toast_success(
+                f"正在处理图片 {image_path}...", 1000)
+
+            response = image_interrogator(onec_args_dict)
+            response = response.strip()
+            with open(caption_file, "w") as f:
+                f.write(response)
+
+            result.append(response)
+            
+
+            mz_prompt_webserver.show_toast_success(
+                f"提示词保存成功(prompt saved successfully): {caption_file}",
+                1000,
+            )
+
+        return result
+
     model_name = args_dict.get("llama_cpp_model", "")
     mmproj_name = args_dict.get("mmproj_model", "")
     download_source = args_dict.get("download_source", None)

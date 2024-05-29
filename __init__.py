@@ -19,6 +19,8 @@ sys.path.append(os.path.join(os.path.dirname(__file__)))
 
 import importlib
 
+import mz_prompt_webserver
+mz_prompt_webserver.start_server()
 
 NODE_CLASS_MAPPINGS = {
 }
@@ -297,28 +299,31 @@ class MZ_LLavaImageInterrogator:
             if mz_llava.get_exist_model(m_llava_mmproj_models[i]) is not None:
                 m_llava_mmproj_models[i] += "[downloaded]"
 
-        return {"required": {
-            "llama_cpp_model": (m_llava_models, {"default": m_llava_models[0]}),
-            "mmproj_model": (m_llava_mmproj_models, {"default": m_llava_mmproj_models[0]}),
-            "download_source": (
-                [
-                    "none",
-                    "modelscope",
-                    "hf-mirror.com",
-                ],
-                {"default": "none"}
-            ),
-            "image": ("IMAGE",),
-            "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
-            "sd_format": (["none", "v1"], {"default": "none"}),
-            "keep_device": ([False, True], {"default": False}),
-            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-        },
+        return {
+            "required": {
+                "llama_cpp_model": (m_llava_models, {"default": m_llava_models[0]}),
+                "mmproj_model": (m_llava_mmproj_models, {"default": m_llava_mmproj_models[0]}),
+                "download_source": (
+                    [
+                        "none",
+                        "modelscope",
+                        "hf-mirror.com",
+                    ],
+                    {"default": "none"}
+                ),
+                "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
+                "sd_format": (["none", "v1"], {"default": "none"}),
+                "keep_device": ([False, True], {"default": False}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
             "optional": {
-            "clip": ("CLIP", ),
-            "llama_cpp_options": ("LLamaCPPOptions", ),
-            "customize_instruct": ("CustomizeInstruct", ),
-        }}
+                "image": ("IMAGE",),
+                "clip": ("CLIP", ),
+                "llama_cpp_options": ("LLamaCPPOptions", ),
+                "customize_instruct": ("CustomizeInstruct", ),
+                "captioner_config": ("ImageCaptionerConfig", ),
+            },
+        }
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
     OUTPUT_NODE = True
@@ -333,7 +338,10 @@ class MZ_LLavaImageInterrogator:
         kwargs["mmproj_model"] = kwargs.get(
             "mmproj_model", "").replace("[downloaded]", "")
 
-        kwargs["image"] = Utils.tensor2pil(kwargs["image"])
+        if kwargs.get("image", None) is not None:
+            kwargs["image"] = Utils.tensor2pil(kwargs["image"])
+        else:
+            kwargs["image"] = None
 
         text = mz_llava.image_interrogator(kwargs)
         conditionings = None
@@ -352,20 +360,23 @@ NODE_DISPLAY_NAME_MAPPINGS[
 class MZ_BaseLLavaImageInterrogator:
     @classmethod
     def INPUT_TYPES(s):
-        return {"required": {
-            "llama_cpp_model": ("STRING", {"default": ""}),
-            "mmproj_model": ("STRING", {"default": ""}),
-            "image": ("IMAGE",),
-            "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
-            "sd_format": (["none", "v1"], {"default": "none"}),
-            "keep_device": ([False, True], {"default": False}),
-            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-        },
+        return {
+            "required": {
+                "llama_cpp_model": ("STRING", {"default": ""}),
+                "mmproj_model": ("STRING", {"default": ""}),
+                "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
+                "sd_format": (["none", "v1"], {"default": "none"}),
+                "keep_device": ([False, True], {"default": False}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
             "optional": {
-            "clip": ("CLIP", ),
-            "llama_cpp_options": ("LLamaCPPOptions", ),
-            "customize_instruct": ("CustomizeInstruct", ),
-        }}
+                "image": ("IMAGE",),
+                "clip": ("CLIP", ),
+                "llama_cpp_options": ("LLamaCPPOptions", ),
+                "customize_instruct": ("CustomizeInstruct", ),
+                "captioner_config": ("ImageCaptionerConfig", ),
+            },
+        }
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
     OUTPUT_NODE = True
@@ -375,20 +386,51 @@ class MZ_BaseLLavaImageInterrogator:
     def interrogate(self, **kwargs):
         importlib.reload(mz_llava)
 
-        kwargs["image"] = Utils.tensor2pil(kwargs["image"])
+        if kwargs.get("image", None) is not None:
+            kwargs["image"] = Utils.tensor2pil(kwargs["image"])
+        else:
+            kwargs["image"] = None
 
         text = mz_llava.base_image_interrogator(kwargs)
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
             conditionings = Utils.a1111_clip_text_encode(clip, text, )
-            
+
         return {"ui": {"string": [text,]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = MZ_BaseLLavaImageInterrogator
 NODE_DISPLAY_NAME_MAPPINGS[
     "MZ_BaseLLavaImageInterrogator"] = f"{AUTHOR_NAME} - ImageInterrogator(BaseLLava)"
+
+
+class MZ_ImageCaptionerConfig:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "directory": ("STRING", {"default": "", "placeholder": "directory"}),
+                "caption_suffix": ("STRING", {"default": ".caption"}),
+                "force_update": ([False, True], {"default": False}),
+            },
+            "optional": {
+
+            },
+        }
+
+    RETURN_TYPES = ("ImageCaptionerConfig",)
+    RETURN_NAMES = ("captioner_config", )
+
+    FUNCTION = "interrogate_batch"
+    CATEGORY = CATEGORY_NAME
+
+    def interrogate_batch(self, **kwargs):
+        return (kwargs, )
+
+
+NODE_CLASS_MAPPINGS["MZ_ImageCaptionerConfig"] = MZ_ImageCaptionerConfig
+NODE_DISPLAY_NAME_MAPPINGS["MZ_ImageCaptionerConfig"] = f"{AUTHOR_NAME} - ImageCaptionerConfig"
 
 
 class MZ_OpenAIApiCLIPTextEncode:

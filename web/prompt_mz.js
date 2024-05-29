@@ -6,6 +6,63 @@ async function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function showToast(message, duration = 3000) {
+  const toast = document.createElement("div");
+  toast.style.position = "fixed";
+  toast.style.top = "20px";
+  toast.style.left = "50%";
+  toast.style.transform = "translateX(-50%)";
+  toast.style.padding = "10px 20px";
+  toast.style.backgroundColor = "var(--comfy-menu-bg)";
+  toast.style.color = "var(--input-text)";
+  toast.style.borderRadius = "10px";
+  toast.style.border = "2px solid var(--border-color)";
+  toast.style.zIndex = "9999";
+
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  await sleep(duration);
+  toast.remove();
+}
+
+async function waitMessage() {
+  var websocket = new WebSocket(
+    `ws://${window.location.host}/mz_webapi/message`
+  );
+  websocket.onmessage = async (event) => {
+    const resp = JSON.parse(event.data);
+    console.log("Message received", resp);
+
+    for (const data of resp) {
+      if (data.type === "toast-success") {
+        await showToast(data.message, data?.duration || 3000);
+      }
+    }
+  };
+  websocket.onclose = async (event) => {
+    console.log("Connection closed", event);
+    await sleep(1000);
+    await waitMessage();
+  };
+
+  websocket.onerror = async (event) => {
+    console.log("Connection error", event);
+    await sleep(1000);
+    await waitMessage();
+  };
+
+  for (;;) {
+    await sleep(1000);
+    try {
+      websocket.send(
+        JSON.stringify({
+          type: "ping",
+        })
+      );
+    } catch (error) {}
+  }
+}
+
 /**
  * @returns {import("./types/comfy").ComfyExtension} extension
  */
@@ -14,6 +71,8 @@ const my_ui = {
   setup() {},
   init: async () => {
     console.log("prompt_mz Registering UI extension");
+
+    waitMessage();
   },
 
   /**

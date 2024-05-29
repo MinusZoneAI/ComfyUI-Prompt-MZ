@@ -7,6 +7,7 @@ import sys
 import torch
 try:
     import mz_prompt_utils
+    import mz_prompt_webserver
 except ImportError:
     pass
 
