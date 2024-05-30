@@ -7,6 +7,7 @@
 Use llama.cpp to assist in generating some nodes related to prompt words, including beautifying prompt words and image recognition similar to clip-interrogator
 
 ## Recent changes
+* [2024-05-30] 
 * [2024-05-24] 运行后在当前节点显示生成的提示词 (Display the generated prompt words in the current node after running)
 * [2024-05-24] 兼容清华智谱API (Compatible with Zhipu API)
 * [2024-05-24] 使用A1111权重缩放,感谢ComfyUI_ADV_CLIP_emb (Use A1111 weight scaling, thanks to ComfyUI_ADV_CLIP_emb)
@@ -42,6 +43,10 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
   ![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/f397c432-c2f7-4d48-9b95-2031cfb19e8c)
   Enable parameter sd_format
   ![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/4d2cf65d-e8a3-4dfa-b735-9d591638028c)
+
++ ImageCaptionerConfig
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/147941a2-cb5f-418f-acd9-8e17ffaf044a)
+
 
 + LLamaCPPOptions
 
