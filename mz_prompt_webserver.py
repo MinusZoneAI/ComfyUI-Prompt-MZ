@@ -2,6 +2,7 @@
 
 import asyncio
 import uuid
+from . import mz_prompt_utils
 
 
 web_msg_pool = {
@@ -49,18 +50,19 @@ def start_server():
                         break
 
                 del web_msg_pool[muuid]
-                print(f"connection {muuid} closed")
+                mz_prompt_utils.Utils.print_log(f"connection {muuid} closed")
                 return ws
             except Exception as e:
-                print(e)
+                mz_prompt_utils.Utils.print_log(e)
                 del web_msg_pool[muuid]
                 return ws
 
         if not any([route.get_info().get("path", "") == "/mz_webapi/message" for route in app.router.routes()]):
-            print("add route /mz_webapi/message")
+            mz_prompt_utils.Utils.print_log("add route /mz_webapi/message")
             app.router.add_get("/mz_webapi/message", message)
         else:
-            print("route /mz_webapi/message is exist")
+            mz_prompt_utils.Utils.print_log(
+                "route /mz_webapi/message is exist")
 
     except Exception as e:
         print(e)
