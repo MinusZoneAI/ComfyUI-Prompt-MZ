@@ -3,9 +3,9 @@ import sys
 import json
 import subprocess
 
-import mz_prompt_utils
-import mz_llama_cpp
-import mz_prompts
+from . import mz_prompt_utils
+from . import mz_llama_cpp
+from . import mz_prompts
 
 
 def zhipu_json_fix(input_data):

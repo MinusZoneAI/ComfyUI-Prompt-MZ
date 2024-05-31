@@ -1,12 +1,12 @@
 import json
 import os
-import mz_prompt_utils
-import mz_llama_cpp
+from . import mz_prompt_utils
+from . import mz_llama_cpp
+from . import mz_prompts
+from . import mz_prompt_webserver
 
 import importlib
 
-import mz_prompts
-import mz_prompt_webserver
 
 LLava_models = [
     "llava-1.6-mistral-7b-gguf/llava-v1.6-mistral-7b.Q5_K_M.gguf",

@@ -41,14 +41,10 @@ async function waitMessage() {
   };
   websocket.onclose = async (event) => {
     console.log("Connection closed", event);
-    await sleep(1000);
-    await waitMessage();
   };
 
   websocket.onerror = async (event) => {
     console.log("Connection error", event);
-    await sleep(1000);
-    await waitMessage();
   };
 
   for (;;) {

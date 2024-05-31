@@ -1,9 +1,6 @@
 import json
-import mz_prompt_utils
-import mz_llama_cpp
-
-import importlib
-
+from .. import mz_prompt_utils
+from .. import mz_llama_cpp
 
 phi3_models = [
     "Phi-3-mini-4k-instruct-q4.gguf"
@@ -32,10 +29,6 @@ def get_exist_model(model_name):
 def query_beautify_prompt_text(args_dict):
     model_name = args_dict.get("llama_cpp_model", "")
     download_source = args_dict.get("download_source", None)
-
-    import mz_prompts
-    importlib.reload(mz_prompts)
-    importlib.reload(mz_llama_cpp)
 
     try:
         model_file = get_exist_model(model_name)

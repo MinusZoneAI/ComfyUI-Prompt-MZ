@@ -1,7 +1,7 @@
 import json
-import mz_prompt_utils
-import mz_llama_cpp
-
+from .. import mz_prompt_utils
+from .. import mz_llama_cpp
+from . import mz_deprecated
 import importlib
 
 
@@ -46,10 +46,6 @@ def query_beautify_prompt_text(args_dict):
     model_name = args_dict.get("llama_cpp_model", "")
     download_source = args_dict.get("download_source", None)
 
-    import mz_prompts
-    importlib.reload(mz_prompts)
-    importlib.reload(mz_llama_cpp)
-
     try:
         model_file = get_exist_model(model_name)
 
@@ -66,7 +62,7 @@ def query_beautify_prompt_text(args_dict):
                 model_file = mz_prompt_utils.Utils.hf_download_model(model_url)
 
         args_dict["llama_cpp_model"] = model_file
-        full_response = mz_llama_cpp.base_query_beautify_prompt_text(
+        full_response = mz_deprecated.base_query_beautify_prompt_text(
             args_dict=args_dict)
         return full_response
 

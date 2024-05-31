@@ -165,6 +165,12 @@ class Utils:
         os.makedirs(models_path, exist_ok=True)
         return models_path
 
+    def get_gguf_models_path():
+        models_path = os.path.join(
+            folder_paths.models_dir, "gguf")
+        os.makedirs(models_path, exist_ok=True)
+        return models_path
+
     def translate_text(text, from_code, to_code):
         try:
             import argostranslate
