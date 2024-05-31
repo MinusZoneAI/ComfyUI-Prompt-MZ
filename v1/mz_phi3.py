@@ -1,6 +1,7 @@
 import json
 from .. import mz_prompt_utils
 from .. import mz_llama_cpp
+from . import mz_deprecated
 
 phi3_models = [
     "Phi-3-mini-4k-instruct-q4.gguf"
@@ -46,7 +47,7 @@ def query_beautify_prompt_text(args_dict):
                 model_file = mz_prompt_utils.Utils.hf_download_model(model_url)
 
         args_dict["llama_cpp_model"] = model_file
-        full_response = mz_llama_cpp.base_query_beautify_prompt_text(
+        full_response = mz_deprecated.base_query_beautify_prompt_text(
             args_dict=args_dict)
         return full_response
 

@@ -1,5 +1,4 @@
 from ..mz_prompt_utils import Utils
-
 NODE_CLASS_MAPPINGS = {
 }
 
@@ -8,11 +7,12 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
 
-import importlib 
+import importlib
 from . import mz_llama3
 from . import mz_phi3
 from .. import mz_llama_cpp
 from .. import mz_llama_core_nodes
+from . import mz_deprecated
 
 
 AUTHOR_NAME = u"MinusZone"
@@ -75,7 +75,7 @@ class MZ_LLama3CLIPTextEncode:
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
 
-    def encode(self, **kwargs): 
+    def encode(self, **kwargs):
 
         kwargs["llama_cpp_model"] = kwargs.get(
             "llama_cpp_model", "").replace("[downloaded]", "")
@@ -176,12 +176,9 @@ class MZ_BaseLLamaCPPCLIPTextEncode:
     CATEGORY = CATEGORY_NAME
 
     def encode(self, **kwargs):
-        importlib.reload(mz_llama3)
-
         kwargs["llama_cpp_model"] = kwargs.get(
             "llama_cpp_model", "").replace("[downloaded]", "")
-
-        text = mz_llama_cpp.base_query_beautify_prompt_text(kwargs)
+        text = mz_deprecated.base_query_beautify_prompt_text(kwargs)
         conditionings = None
         clip = kwargs.get("clip", None)
         if clip is not None:
