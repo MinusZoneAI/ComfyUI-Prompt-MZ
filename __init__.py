@@ -57,6 +57,9 @@ class MZ_LLamaCPPModelConfig_ManualSelect:
         return (kwargs,)
 
 
+NODE_CLASS_MAPPINGS["MZ_LLamaCPPModelConfig_ManualSelect"] = MZ_LLamaCPPModelConfig_ManualSelect
+NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - LLamaCPPModelConfigManualSelect"
+
 class MZ_LLamaCPPCLIPTextEncode:
     @classmethod
     def INPUT_TYPES(s):
