@@ -1,6 +1,7 @@
 
 import importlib
 import json
+import os
 from . import mz_prompt_utils
 from . import mz_llama_cpp
 from . import mz_prompts
@@ -59,10 +60,20 @@ def llama_cpp_node_encode(args_dict):
     model_config = args_dict.get("llama_cpp_model", {})
     mz_prompt_utils.Utils.print_log(f"model_config: {model_config}")
 
-    model_file = model_config.get("model_path", "auto")
+    select_model_type = model_config.get("type", "ManualSelect")
+    if select_model_type == "ManualSelect":
+        model_file = model_config.get("model_path", "auto")
+        if model_file == "auto":
+            model_file = mz_prompt_utils.Utils.get_auto_model_fullpath(
+                "Meta-Llama-3-8B-Instruct-Q4_K_M")
+    elif select_model_type == "DownloaderSelect":
+        model_name = model_config.get("model_name", "")
+        model_file = mz_prompt_utils.Utils.get_auto_model_fullpath(
+            model_name)
+    else:
+        raise Exception("Unknown select_model_type")
 
     mz_prompt_utils.Utils.print_log(f"model_file: {model_file}")
-
 
     text = args_dict.get("text", "")
     style_presets = args_dict.get("style_presets", "")
@@ -221,3 +232,160 @@ def llama_cpp_node_encode(args_dict):
             clip, full_response, )
 
     return {"ui": {"string": [full_response,]}, "result": (full_response, conditionings)}
+
+
+def image_interrogator_captioner(args_dict):
+    import PIL.Image as Image
+    captioner_config = args_dict.get("captioner_config", {})
+    directory = captioner_config.get("directory", None)
+    force_update = captioner_config.get("force_update", False)
+    caption_suffix = captioner_config.get("caption_suffix", "")
+    retry_keyword = captioner_config.get("retry_keyword", "")
+    retry_keywords = retry_keyword.split(",")
+
+    retry_keywords = [k.strip() for k in retry_keywords]
+    retry_keywords = [k for k in retry_keywords if k != ""]
+
+    pre_images = []
+    for root, dirs, files in os.walk(directory):
+        for file in files:
+            if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
+                image_path = os.path.join(root, file)
+                base_file_path = os.path.splitext(image_path)[0]
+                caption_file = os.path.join(
+                    root, base_file_path + caption_suffix)
+                if os.path.exists(caption_file) and force_update is False:
+                    continue
+
+                pre_images.append({
+                    "image_path": image_path,
+                    "caption_path": caption_file
+                })
+
+    result = []
+
+    pb = mz_prompt_utils.Utils.progress_bar(len(pre_images))
+    for i in range(len(pre_images)):
+        pre_image = pre_images[i]
+        image_path = pre_image["image_path"]
+        caption_file = pre_image["caption_path"]
+
+        onec_args_dict = args_dict.copy()
+        del onec_args_dict["captioner_config"]
+
+        pil_image = Image.open(image_path)
+        onec_args_dict["image"] = pil_image
+
+        if i < len(pre_images) - 1:
+            onec_args_dict["keep_device"] = True
+
+        pb.update(
+            i,
+            len(pre_images),
+            pil_image.copy(),
+        )
+
+        response = image_interrogator_node_encode(onec_args_dict)
+        response = response.get("result", ())[0]
+        response = response.strip()
+        is_retry = response == ""
+        for k in retry_keywords:
+            if response.find(k) != -1:
+                print(f"存在需要重试的关键词 ; Retry keyword found: {k}")
+                is_retry = True
+                break
+
+        mz_prompt_utils.Utils.print_log(
+            "\n\nonec_args_dict: ", onec_args_dict)
+        if is_retry:
+            for retry_n in range(5):
+                print(f"Retry {retry_n+1}...")
+                onec_args_dict["seed"] = onec_args_dict["seed"] + 1
+                response = image_interrogator_node_encode(onec_args_dict)
+                response = response.get("result", ())[0]
+                response = response.strip()
+                is_retry = response == ""
+                for k in retry_keywords:
+                    if response.find(k) != -1:
+                        print(f"存在需要重试的关键词 ; Retry keyword found: {k}")
+                        is_retry = True
+                        break
+
+                if is_retry is False:
+                    break
+            if is_retry:
+                print(f"重试失败,图片被跳过 ; Retry failed")
+                response = ""
+
+        if response != "":
+            with open(caption_file, "w") as f:
+                f.write(response)
+
+        result.append(response)
+
+        # mz_prompt_webserver.show_toast_success(
+        #     f"提示词保存成功(prompt saved successfully): {caption_file}",
+        #     1000,
+        # )
+
+    return result
+
+
+
+image_interrogator_auto_mmproj_model = {
+    
+}
+
+def image_interrogator_node_encode(args_dict):
+    image_interrogator_model = args_dict.get("image_interrogator_model", {})
+
+    llama_cpp_model = image_interrogator_model.get("llama_cpp_model", "auto")
+    mmproj_model = image_interrogator_model.get("mmproj_model", "auto")
+
+    captioner_config = args_dict.get("captioner_config", None)
+    if captioner_config is not None:
+        image_interrogator_captioner(args_dict)
+        raise Exception(
+            "图片批量反推任务已完成 ; Image batch reverse push task completed")
+
+    image = args_dict.get("image", None)
+    resolution = args_dict.get("resolution", 512)
+    keep_device = args_dict.get("keep_device", False)
+    seed = args_dict.get("seed", -1)
+    options = args_dict.get("llama_cpp_options", {})
+    options["seed"] = seed
+
+    image = mz_prompt_utils.Utils.resize_max(image, resolution, resolution)
+
+    customize_instruct = args_dict.get("customize_instruct", None)
+    if customize_instruct is None:
+        system_text = mz_prompts.GPT4VImageCaptioner_System
+        question_text = mz_prompts.GPT4VImageCaptioner_Prompt
+    else:
+
+        system_prompt = customize_instruct.get("system", "")
+        question = customize_instruct.get("instruct", "%text%")
+        system_prompt = system_prompt.replace("%text%", "")
+        question = question.replace("%text%", "")
+
+    response = mz_llama_cpp.llava_cpp_simple_interrogator(
+        model_file=llama_cpp_model,
+        mmproj_file=mmproj_model,
+        image=image,
+        options=options,
+        system=system_text,
+        question=question_text,
+    )
+
+    if keep_device is False:
+        mz_llama_cpp.freed_gpu_memory(model_file=llama_cpp_model)
+
+    # return response
+
+    conditionings = None
+    clip = args_dict.get("clip", None)
+    if clip is not None:
+        conditionings = mz_prompt_utils.Utils.a1111_clip_text_encode(
+            clip, response, )
+
+    return {"ui": {"string": [response,]}, "result": (response, conditionings)}

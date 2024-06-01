@@ -32,22 +32,34 @@ NODE_DISPLAY_NAME_MAPPINGS = {
 
 
 from . import mz_llama_cpp
-from . import mz_llava
+
+
+def getCommonCLIPTextEncodeInput():
+    from . import mz_llama_core_nodes
+    style_presets = mz_llama_core_nodes.get_style_presets()
+    CommonCLIPTextEncodeInput = {
+        "required": {
+            "style_presets": (
+                style_presets, {"default": style_presets[1]}
+            ),
+            "text": ("STRING", {"multiline": True, }),
+            "keep_device": ([False, True], {"default": False}),
+            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+        },
+        "optional": {
+            "clip": ("CLIP", ),
+            "llama_cpp_options": ("LLamaCPPOptions", ),
+            "customize_instruct": ("CustomizeInstruct", ),
+        }
+    }
+
+    return CommonCLIPTextEncodeInput
 
 
 class MZ_LLamaCPPModelConfig_ManualSelect:
     @classmethod
     def INPUT_TYPES(s):
-        gguf_dir = Utils.get_gguf_models_path()
-        if not os.path.exists(gguf_dir):
-            os.makedirs(gguf_dir)
-        gguf_files = []
-        # walk gguf_dir
-        for root, dirs, files in os.walk(gguf_dir):
-            for file in files:
-                if file.endswith(".gguf"):
-                    gguf_files.append(
-                        os.path.relpath(os.path.join(root, file), gguf_dir))
+        gguf_files = Utils.get_gguf_files()
         return {
             "required": {
                 "llama_cpp_model": (gguf_files,),
@@ -60,7 +72,7 @@ class MZ_LLamaCPPModelConfig_ManualSelect:
     RETURN_NAMES = ("llama_cpp_model_config",)
 
     FUNCTION = "create"
-    CATEGORY = CATEGORY_NAME
+    CATEGORY = f"{CATEGORY_NAME}/others"
 
     def create(self, **kwargs):
         kwargs = kwargs.copy()
@@ -78,8 +90,50 @@ class MZ_LLamaCPPModelConfig_ManualSelect:
 
 NODE_CLASS_MAPPINGS["MZ_LLamaCPPModelConfig_ManualSelect"] = MZ_LLamaCPPModelConfig_ManualSelect
 NODE_DISPLAY_NAME_MAPPINGS[
-    "MZ_LLamaCPPModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - ModelConfigManualSelect"
+    "MZ_LLamaCPPModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - ModelConfigManualSelect(LLamaCPP)"
 
+
+class MZ_LLamaCPPModelConfig_DownloaderSelect:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model_name": ([
+                    "Meta-Llama-3-8B-Instruct-Q4_K_M",
+                    "Phi-3-mini-4k-instruct-q4",
+                    "Meta-Llama-3-8B-Q4_K_M",
+                    "llama3_8b_instruct_dpo_zh-Q4_K_M",
+                    "llama3-zh.Q4_K_M",
+                    "qwen1_5-14b-chat-q4_k_m",
+                    "qwen1_5-7b-chat-q4_k_m",
+                    "qwen1_5-4b-chat-q4_k_m",
+                    "qwen1_5-1_8b-chat-q4_k_m",
+                    "qwen1_5-0_5b-chat-q4_k_m",
+                ],),
+            },
+            "optional": {
+            },
+        }
+    
+    RETURN_TYPES = ("LLamaCPPModelConfig",)
+    RETURN_NAMES = ("llama_cpp_model_config",)
+
+    FUNCTION = "create"
+    CATEGORY = f"{CATEGORY_NAME}/others"
+
+
+    def create(self, **kwargs):
+        kwargs = kwargs.copy()
+
+        model_name = kwargs.get("model_name", "")
+        return ({
+            "type": "DownloaderSelect",
+            "model_name": model_name,
+        },)
+
+
+NODE_CLASS_MAPPINGS["MZ_LLamaCPPModelConfig_DownloaderSelect"] = MZ_LLamaCPPModelConfig_DownloaderSelect
+NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPModelConfig_DownloaderSelect"] = f"{AUTHOR_NAME} - ModelConfigDownloaderSelect(LLamaCPP)"
 
 class MZ_LLamaCPPCLIPTextEncode:
     @classmethod
@@ -109,7 +163,7 @@ class MZ_LLamaCPPCLIPTextEncode:
     CATEGORY = CATEGORY_NAME
 
     DESCRIPTION = """
-llama_cpp_model不设置时，将使用默认模型: Meta-Llama-3-8B-Instruct.Q4_K_M.gguf
+llama_cpp_model不设置时，将使用默认模型: Meta-Llama-3-8B-Instruct-Q4_K_M.gguf
 """
 
     def encode(self, **kwargs):
@@ -155,7 +209,7 @@ class MZ_LLamaCPPOptions:
     RETURN_NAMES = ("llama_cpp_options",)
 
     FUNCTION = "create"
-    CATEGORY = CATEGORY_NAME
+    CATEGORY = f"{CATEGORY_NAME}/others"
 
     def create(self, **kwargs):
         kwargs = kwargs.copy()
@@ -185,164 +239,16 @@ class MZ_CustomizeInstruct:
     RETURN_TYPES = ("CustomizeInstruct",)
     RETURN_NAMES = ("customize_instruct",)
     FUNCTION = "create"
-    CATEGORY = CATEGORY_NAME
+    CATEGORY = f"{CATEGORY_NAME}/others"
 
     def create(self, **kwargs):
         kwargs = kwargs.copy()
-        
+
         return (kwargs,)
 
 
 NODE_CLASS_MAPPINGS["MZ_CustomizeInstruct"] = MZ_CustomizeInstruct
 NODE_DISPLAY_NAME_MAPPINGS["MZ_CustomizeInstruct"] = f"{AUTHOR_NAME} - CustomizeInstruct"
-
-
-def getCommonCLIPTextEncodeInput():
-    from . import mz_llama_core_nodes
-    style_presets = mz_llama_core_nodes.get_style_presets()
-    CommonCLIPTextEncodeInput = {
-        "required": {
-            "prompt_version": (["v1"], {"default": "v1"}),
-            "style_presets": (
-                style_presets, {"default": style_presets[1]}
-            ),
-            "text": ("STRING", {"multiline": True, }),
-            "keep_device": ([False, True], {"default": False}),
-            "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-        },
-        "optional": {
-            "clip": ("CLIP", ),
-            "llama_cpp_options": ("LLamaCPPOptions", ),
-            "customize_instruct": ("CustomizeInstruct", ),
-            # "customize_json_schema": ("STRING", ),
-        }
-    }
-
-    return CommonCLIPTextEncodeInput
-
-
-class MZ_LLavaImageInterrogator:
-    @classmethod
-    def INPUT_TYPES(s):
-        importlib.reload(mz_llava)
-        m_llava_models = mz_llava.LLava_models.copy()
-        for i in range(len(m_llava_models)):
-            if mz_llava.get_exist_model(m_llava_models[i]) is not None:
-                m_llava_models[i] += "[downloaded]"
-
-        m_llava_mmproj_models = mz_llava.LLava_mmproj_models.copy()
-        for i in range(len(m_llava_mmproj_models)):
-            if mz_llava.get_exist_model(m_llava_mmproj_models[i]) is not None:
-                m_llava_mmproj_models[i] += "[downloaded]"
-
-        return {
-            "required": {
-                "llama_cpp_model": (m_llava_models, {"default": m_llava_models[0]}),
-                "mmproj_model": (m_llava_mmproj_models, {"default": m_llava_mmproj_models[0]}),
-                "download_source": (
-                    [
-                        "none",
-                        "modelscope",
-                        "hf-mirror.com",
-                    ],
-                    {"default": "none"}
-                ),
-                "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
-                "sd_format": (["none", "v1", ], {"default": "none"}),
-                "keep_device": ([False, True], {"default": False}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-            },
-            "optional": {
-                "image": ("IMAGE",),
-                "clip": ("CLIP", ),
-                "llama_cpp_options": ("LLamaCPPOptions", ),
-                "customize_instruct": ("CustomizeInstruct", ),
-                "captioner_config": ("ImageCaptionerConfig", ),
-            },
-        }
-    RETURN_TYPES = ("STRING", "CONDITIONING",)
-    RETURN_NAMES = ("text", "conditioning",)
-    OUTPUT_NODE = True
-    FUNCTION = "interrogate"
-    CATEGORY = CATEGORY_NAME
-
-    def interrogate(self, **kwargs):
-        kwargs = kwargs.copy()
-        
-        importlib.reload(mz_llava)
-
-        kwargs["llama_cpp_model"] = kwargs.get(
-            "llama_cpp_model", "").replace("[downloaded]", "")
-        kwargs["mmproj_model"] = kwargs.get(
-            "mmproj_model", "").replace("[downloaded]", "")
-
-        if kwargs.get("image", None) is not None:
-            kwargs["image"] = Utils.tensor2pil(kwargs["image"])
-        else:
-            kwargs["image"] = None
-
-        text = mz_llava.image_interrogator(kwargs)
-        conditionings = None
-        clip = kwargs.get("clip", None)
-        if clip is not None:
-            conditionings = Utils.a1111_clip_text_encode(clip, text, )
-
-        return {"ui": {"string": [Utils.to_debug_prompt(text),]}, "result": (text, conditionings)}
-
-
-NODE_CLASS_MAPPINGS["MZ_LLavaImageInterrogator"] = MZ_LLavaImageInterrogator
-NODE_DISPLAY_NAME_MAPPINGS[
-    "MZ_LLavaImageInterrogator"] = f"{AUTHOR_NAME} - ImageInterrogator(LLava)"
-
-
-class MZ_BaseLLavaImageInterrogator:
-    @classmethod
-    def INPUT_TYPES(s):
-        return {
-            "required": {
-                "llama_cpp_model": ("STRING", {"default": ""}),
-                "mmproj_model": ("STRING", {"default": ""}),
-                "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
-                "sd_format": (["none", "v1"], {"default": "none"}),
-                "keep_device": ([False, True], {"default": False}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
-            },
-            "optional": {
-                "image": ("IMAGE",),
-                "clip": ("CLIP", ),
-                "llama_cpp_options": ("LLamaCPPOptions", ),
-                "customize_instruct": ("CustomizeInstruct", ),
-                "captioner_config": ("ImageCaptionerConfig", ),
-            },
-        }
-    RETURN_TYPES = ("STRING", "CONDITIONING",)
-    RETURN_NAMES = ("text", "conditioning",)
-    OUTPUT_NODE = True
-    FUNCTION = "interrogate"
-    CATEGORY = CATEGORY_NAME
-
-    def interrogate(self, **kwargs):
-        kwargs = kwargs.copy()
-        
-        importlib.reload(mz_llava)
-
-        if kwargs.get("image", None) is not None:
-            kwargs["image"] = Utils.tensor2pil(kwargs["image"])
-        else:
-            kwargs["image"] = None
-
-        text = mz_llava.base_image_interrogator(kwargs)
-        conditionings = None
-        clip = kwargs.get("clip", None)
-        if clip is not None:
-            conditionings = Utils.a1111_clip_text_encode(clip, text, )
-
-        return {"ui": {"string": [Utils.to_debug_prompt(text),]}, "result": (text, conditionings)}
-
-
-NODE_CLASS_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = MZ_BaseLLavaImageInterrogator
-NODE_DISPLAY_NAME_MAPPINGS[
-    "MZ_BaseLLavaImageInterrogator"] = f"{AUTHOR_NAME} - ImageInterrogator(BaseLLava)"
 
 
 class MZ_ImageCaptionerConfig:
@@ -364,11 +270,11 @@ class MZ_ImageCaptionerConfig:
     RETURN_NAMES = ("captioner_config", )
 
     FUNCTION = "interrogate_batch"
-    CATEGORY = CATEGORY_NAME
+    CATEGORY = f"{CATEGORY_NAME}/others"
 
     def interrogate_batch(self, **kwargs):
         kwargs = kwargs.copy()
-        
+
         return (kwargs, )
 
 
@@ -427,7 +333,7 @@ class MZ_OpenAIApiCLIPTextEncode:
 
     def encode(self, **kwargs):
         kwargs = kwargs.copy()
-        
+
         import mz_openaiapi
         importlib.reload(mz_openaiapi)
 
@@ -462,6 +368,88 @@ class MZ_OpenAIApiCLIPTextEncode:
 NODE_CLASS_MAPPINGS["MZ_OpenAIApiCLIPTextEncode"] = MZ_OpenAIApiCLIPTextEncode
 NODE_DISPLAY_NAME_MAPPINGS[
     "MZ_OpenAIApiCLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(OpenAIApi)"
+
+
+class MZ_ImageInterrogatorCLIPTextEncode:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
+                "keep_device": ([False, True], {"default": False}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
+            "optional": {
+                "image_interrogator_model": ("ImageInterrogatorModelConfig", ),
+                "image": ("IMAGE",),
+                "clip": ("CLIP", ),
+                "llama_cpp_options": ("LLamaCPPOptions", ),
+                "customize_instruct": ("CustomizeInstruct", ),
+                "captioner_config": ("ImageCaptionerConfig", ),
+            },
+        }
+
+    RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+
+    def encode(self, **kwargs):
+        kwargs = kwargs.copy()
+        from . import mz_llama_core_nodes
+        importlib.reload(mz_llama_core_nodes)
+
+        return mz_llama_core_nodes.image_interrogator_node_encode(kwargs)
+
+
+NODE_CLASS_MAPPINGS["MZ_ImageInterrogatorCLIPTextEncode"] = MZ_ImageInterrogatorCLIPTextEncode
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_ImageInterrogatorCLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(ImageInterrogator)"
+
+
+class MZ_ImageInterrogatorModelConfig_ManualSelect:
+    @classmethod
+    def INPUT_TYPES(s):
+        gguf_files = Utils.get_gguf_files()
+        return {
+            "required": {
+                "llama_cpp_model": (gguf_files,),
+                "mmproj_model": (["auto"] + gguf_files,),
+            },
+            "optional": {
+            },
+        }
+
+    RETURN_TYPES = ("ImageInterrogatorModelConfig",)
+    RETURN_NAMES = ("image_interrogator_model",)
+
+    FUNCTION = "create"
+    CATEGORY = f"{CATEGORY_NAME}/others"
+
+    def create(self, **kwargs):
+        kwargs = kwargs.copy()
+
+        llama_cpp_model = kwargs.get("llama_cpp_model", "")
+        if llama_cpp_model != "":
+            llama_cpp_model = os.path.join(
+                Utils.get_gguf_models_path(), llama_cpp_model)
+
+        mmproj_model = kwargs.get("mmproj_model", "")
+        if mmproj_model != "":
+            mmproj_model = os.path.join(
+                Utils.get_gguf_models_path(), mmproj_model)
+
+        return ({
+            "type": "ManualSelect",
+            "model_path": llama_cpp_model,
+            "mmproj_model": mmproj_model,
+        },)
+
+
+NODE_CLASS_MAPPINGS["MZ_ImageInterrogatorModelConfig_ManualSelect"] = MZ_ImageInterrogatorModelConfig_ManualSelect
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_ImageInterrogatorModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - ModelConfigManualSelect(ImageInterrogator)"
 
 from . import mz_gen_translate
 mz_gen_translate.gen_translate(NODE_DISPLAY_NAME_MAPPINGS, NODE_CLASS_MAPPINGS)
