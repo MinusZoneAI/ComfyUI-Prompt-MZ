@@ -30,7 +30,7 @@ NODE_CLASS_MAPPINGS = {
 NODE_DISPLAY_NAME_MAPPINGS = {
 }
 
- 
+
 from . import mz_llama_cpp
 from . import mz_llava
 
@@ -38,7 +38,16 @@ from . import mz_llava
 class MZ_LLamaCPPModelConfig_ManualSelect:
     @classmethod
     def INPUT_TYPES(s):
-        gguf_files = folder_paths.get_filename_list("gguf")
+        gguf_dir = Utils.get_gguf_models_path()
+        if not os.path.exists(gguf_dir):
+            os.makedirs(gguf_dir)
+        gguf_files = []
+        # walk gguf_dir
+        for root, dirs, files in os.walk(gguf_dir):
+            for file in files:
+                if file.endswith(".gguf"):
+                    gguf_files.append(
+                        os.path.relpath(os.path.join(root, file), gguf_dir))
         return {
             "required": {
                 "llama_cpp_model": (gguf_files,),
@@ -54,11 +63,16 @@ class MZ_LLamaCPPModelConfig_ManualSelect:
     CATEGORY = CATEGORY_NAME
 
     def create(self, **kwargs):
-        return (kwargs,)
+        return ({
+            "type": "ManualSelect",
+            "model_path": kwargs,
+        },)
 
 
 NODE_CLASS_MAPPINGS["MZ_LLamaCPPModelConfig_ManualSelect"] = MZ_LLamaCPPModelConfig_ManualSelect
-NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - LLamaCPPModelConfigManualSelect"
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_LLamaCPPModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - LLamaCPPModelConfigManualSelect"
+
 
 class MZ_LLamaCPPCLIPTextEncode:
     @classmethod
@@ -141,7 +155,7 @@ class MZ_CustomizeInstruct:
     @classmethod
     def INPUT_TYPES(s):
         from . import mz_prompts
-        
+
         return {
             "required": {
                 "system": ("STRING", {"multiline": True, "default": mz_prompts.Long_prompt}),
