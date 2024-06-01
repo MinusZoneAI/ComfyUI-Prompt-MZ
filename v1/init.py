@@ -16,7 +16,7 @@ from . import mz_deprecated
 
 
 AUTHOR_NAME = u"MinusZone"
-CATEGORY_NAME = f"{AUTHOR_NAME} - Prompt/deprecated"
+CATEGORY_NAME = f"{AUTHOR_NAME} - Prompt/v1"
 
 
 def getCommonCLIPTextEncodeInput():
