@@ -122,6 +122,7 @@ def freed_gpu_memory(model_file):
 def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     if options is None:
         options = {}
+    options = options.copy()
     print(f"Find local model file: {model_file}")
     init_opts = ["n_ctx", "logits_all", "chat_format", "n_gpu_layers"]
 
@@ -178,6 +179,8 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
             f"llama_cpp_model_and_opt_{model_file}", model_and_opt)
 
     model = model_and_opt.get("model")
+    model.set_seed(options.get("seed", -1))
+    model.reset()
 
     response_format = options.get("response_format", None)
     mz_prompt_utils.Utils.print_log(
@@ -235,8 +238,8 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     return result
 
 
-
 def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=None, question="", schema={}, options={}):
+    options = options.copy()
     if system is None:
         system = ""
         messages = [
@@ -288,6 +291,7 @@ def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=No
 def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, question="", options={}):
     if options is None:
         options = {}
+    options = options.copy()
     if system is None:
         system = ""
         messages = [
@@ -328,6 +332,8 @@ def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, ques
 def llava_cpp_messages(model_file, chat_handler, messages, options={}):
     if options is None:
         options = {}
+
+    options = options.copy()
     options["logits_all"] = True
     options["n_ctx"] = max(4096, options.get("n_ctx", 4096))
     return llama_cpp_messages(model_file, chat_handler, messages, options)
@@ -338,7 +344,7 @@ def llava_cpp_simple_interrogator(
         image=None, options={}):
     if options is None:
         options = {}
-
+    options = options.copy()
     check_llama_cpp_requirements()
 
     content = []
@@ -351,6 +357,7 @@ def llava_cpp_simple_interrogator(
     check_llama_cpp_requirements()
     from llama_cpp.llama_chat_format import Llava15ChatHandler
     if mmproj_file is not None:
+        mz_prompt_utils.Utils.print_log(f"llava_cpp_simple_interrogator mmproj_file: {mmproj_file}")
         chat_handler = Llava15ChatHandler(clip_model_path=mmproj_file)
 
     return llava_cpp_messages(model_file, chat_handler, [
@@ -363,20 +370,3 @@ def llava_cpp_simple_interrogator(
             "content": content,
         },
     ], options=options)
-
-
-def llava_cpp_simple_interrogator_to_json(
-        model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please\nuse json format for output:",
-        image=None, schema={}, options={}):
-
-    response_format = {
-        "type": "json_object",
-        "schema": schema,
-    }
-    options["response_format"] = response_format
-    options["chat_format"] = "chatml"
-
-    result = llava_cpp_simple_interrogator(
-        model_file, mmproj_file, system=system, question=question, image=image, options=options)
-    return result
-

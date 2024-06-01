@@ -56,7 +56,14 @@ def llama_cpp_node_encode(args_dict):
     importlib.reload(mz_prompts)
     importlib.reload(mz_llama_cpp)
 
-    model_file = args_dict.get("llama_cpp_model", "")
+    model_config = args_dict.get("llama_cpp_model", {})
+    mz_prompt_utils.Utils.print_log(f"model_config: {model_config}")
+
+    model_file = model_config.get("model_path", "auto")
+
+    mz_prompt_utils.Utils.print_log(f"model_file: {model_file}")
+
+
     text = args_dict.get("text", "")
     style_presets = args_dict.get("style_presets", "")
     options = args_dict.get("llama_cpp_options", {})

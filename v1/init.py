@@ -130,6 +130,8 @@ class MZ_Phi3CLIPTextEncode:
     CATEGORY = CATEGORY_NAME
 
     def encode(self, **kwargs):
+        kwargs = kwargs.copy()
+        
         importlib.reload(mz_llama3)
 
         kwargs["llama_cpp_model"] = kwargs.get(
@@ -176,6 +178,8 @@ class MZ_BaseLLamaCPPCLIPTextEncode:
     CATEGORY = CATEGORY_NAME
 
     def encode(self, **kwargs):
+        kwargs = kwargs.copy()
+        
         kwargs["llama_cpp_model"] = kwargs.get(
             "llama_cpp_model", "").replace("[downloaded]", "")
         text = mz_deprecated.base_query_beautify_prompt_text(kwargs)

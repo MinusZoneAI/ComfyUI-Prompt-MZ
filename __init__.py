@@ -20,8 +20,8 @@ CATEGORY_NAME = f"{AUTHOR_NAME} - Prompt"
 
 import importlib
 
-# import mz_prompt_webserver
-# mz_prompt_webserver.start_server()
+from . import mz_prompt_webserver
+mz_prompt_webserver.start_server()
 
 NODE_CLASS_MAPPINGS = {
 }
@@ -63,15 +63,22 @@ class MZ_LLamaCPPModelConfig_ManualSelect:
     CATEGORY = CATEGORY_NAME
 
     def create(self, **kwargs):
+        kwargs = kwargs.copy()
+
+        llama_cpp_model = kwargs.get("llama_cpp_model", "")
+        if llama_cpp_model != "":
+            llama_cpp_model = os.path.join(
+                Utils.get_gguf_models_path(), llama_cpp_model)
+
         return ({
             "type": "ManualSelect",
-            "model_path": kwargs,
+            "model_path": llama_cpp_model,
         },)
 
 
 NODE_CLASS_MAPPINGS["MZ_LLamaCPPModelConfig_ManualSelect"] = MZ_LLamaCPPModelConfig_ManualSelect
 NODE_DISPLAY_NAME_MAPPINGS[
-    "MZ_LLamaCPPModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - LLamaCPPModelConfigManualSelect"
+    "MZ_LLamaCPPModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - ModelConfigManualSelect"
 
 
 class MZ_LLamaCPPCLIPTextEncode:
@@ -94,17 +101,28 @@ class MZ_LLamaCPPCLIPTextEncode:
             result["optional"][key] = common_input["optional"][key]
 
         return result
+
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)
     OUTPUT_NODE = True
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME
 
+    DESCRIPTION = """
+llama_cpp_model不设置时，将使用默认模型: Meta-Llama-3-8B-Instruct.Q4_K_M.gguf
+"""
+
     def encode(self, **kwargs):
+        kwargs = kwargs.copy()
         from . import mz_llama_core_nodes
         importlib.reload(mz_llama_core_nodes)
 
         return mz_llama_core_nodes.llama_cpp_node_encode(kwargs)
+
+
+NODE_CLASS_MAPPINGS["MZ_LLamaCPPCLIPTextEncode"] = MZ_LLamaCPPCLIPTextEncode
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_LLamaCPPCLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(llama.cpp通用)"
 
 
 class MZ_LLamaCPPOptions:
@@ -140,6 +158,7 @@ class MZ_LLamaCPPOptions:
     CATEGORY = CATEGORY_NAME
 
     def create(self, **kwargs):
+        kwargs = kwargs.copy()
         importlib.reload(mz_llama_cpp)
         opt = {}
         for key in kwargs:
@@ -169,6 +188,8 @@ class MZ_CustomizeInstruct:
     CATEGORY = CATEGORY_NAME
 
     def create(self, **kwargs):
+        kwargs = kwargs.copy()
+        
         return (kwargs,)
 
 
@@ -227,7 +248,7 @@ class MZ_LLavaImageInterrogator:
                     {"default": "none"}
                 ),
                 "resolution": ("INT", {"default": 512, "min": 128, "max": 2048}),
-                "sd_format": (["none", "v1"], {"default": "none"}),
+                "sd_format": (["none", "v1", ], {"default": "none"}),
                 "keep_device": ([False, True], {"default": False}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             },
@@ -246,6 +267,8 @@ class MZ_LLavaImageInterrogator:
     CATEGORY = CATEGORY_NAME
 
     def interrogate(self, **kwargs):
+        kwargs = kwargs.copy()
+        
         importlib.reload(mz_llava)
 
         kwargs["llama_cpp_model"] = kwargs.get(
@@ -264,7 +287,7 @@ class MZ_LLavaImageInterrogator:
         if clip is not None:
             conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
-        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
+        return {"ui": {"string": [Utils.to_debug_prompt(text),]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_LLavaImageInterrogator"] = MZ_LLavaImageInterrogator
@@ -299,6 +322,8 @@ class MZ_BaseLLavaImageInterrogator:
     CATEGORY = CATEGORY_NAME
 
     def interrogate(self, **kwargs):
+        kwargs = kwargs.copy()
+        
         importlib.reload(mz_llava)
 
         if kwargs.get("image", None) is not None:
@@ -312,7 +337,7 @@ class MZ_BaseLLavaImageInterrogator:
         if clip is not None:
             conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
-        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
+        return {"ui": {"string": [Utils.to_debug_prompt(text),]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_BaseLLavaImageInterrogator"] = MZ_BaseLLavaImageInterrogator
@@ -328,6 +353,7 @@ class MZ_ImageCaptionerConfig:
                 "directory": ("STRING", {"default": "", "placeholder": "directory"}),
                 "caption_suffix": ("STRING", {"default": ".caption"}),
                 "force_update": ([False, True], {"default": False}),
+                "retry_keyword": ("STRING", {"default": "not,\",error"}),
             },
             "optional": {
 
@@ -341,6 +367,8 @@ class MZ_ImageCaptionerConfig:
     CATEGORY = CATEGORY_NAME
 
     def interrogate_batch(self, **kwargs):
+        kwargs = kwargs.copy()
+        
         return (kwargs, )
 
 
@@ -398,6 +426,8 @@ class MZ_OpenAIApiCLIPTextEncode:
     CATEGORY = CATEGORY_NAME
 
     def encode(self, **kwargs):
+        kwargs = kwargs.copy()
+        
         import mz_openaiapi
         importlib.reload(mz_openaiapi)
 
@@ -426,7 +456,7 @@ class MZ_OpenAIApiCLIPTextEncode:
         if clip is not None:
             conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
-        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
+        return {"ui": {"string": [Utils.to_debug_prompt(text),]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_OpenAIApiCLIPTextEncode"] = MZ_OpenAIApiCLIPTextEncode

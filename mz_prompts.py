@@ -20,9 +20,12 @@ Please output the standardized json content.
 """
 
 
+GPT4VImageCaptioner_System = """
+As an AI image tagging expert, please provide precise tags for these images to enhance CLIP model's understanding of the content. 
+"""
+
 # 来自https://github.com/jiayev/GPT4V-Image-Captioner
 GPT4VImageCaptioner_Prompt = """
-As an AI image tagging expert, please provide precise tags for these images to enhance CLIP model's understanding of the content. 
 Employ succinct keywords or phrases, steering clear of elaborate sentences and extraneous conjunctions. 
 Prioritize the tags by relevance. 
 Your tags should capture key elements such as the main subject, setting, artistic style, composition, image quality, color tone, filter, and camera specifications, and any other tags crucial for the image. 
