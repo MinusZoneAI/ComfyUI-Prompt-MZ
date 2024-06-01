@@ -86,7 +86,7 @@ class MZ_LLama3CLIPTextEncode:
         if clip is not None:
             conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
-        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
+        return {"ui": {"string": [Utils.to_debug_prompt(text),]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_LLama3CLIPTextEncode"] = MZ_LLama3CLIPTextEncode
@@ -143,7 +143,7 @@ class MZ_Phi3CLIPTextEncode:
         if clip is not None:
             conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
-        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
+        return {"ui": {"string": [Utils.to_debug_prompt(text),]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_Phi3CLIPTextEncode"] = MZ_Phi3CLIPTextEncode
@@ -188,7 +188,7 @@ class MZ_BaseLLamaCPPCLIPTextEncode:
         if clip is not None:
             conditionings = Utils.a1111_clip_text_encode(clip, text, )
 
-        return {"ui": {"string": [text,]}, "result": (text, conditionings)}
+        return {"ui": {"string": [Utils.to_debug_prompt(text),]}, "result": (text, conditionings)}
 
 
 NODE_CLASS_MAPPINGS["MZ_BaseLLamaCPPCLIPTextEncode"] = MZ_BaseLLamaCPPCLIPTextEncode
