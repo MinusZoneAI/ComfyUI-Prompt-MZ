@@ -111,7 +111,7 @@ def image_interrogator(args_dict):
             onec_args_dict["image"] = pil_image
 
             if i < len(pre_images) - 1:
-                onec_args_dict["keep_device"] = True 
+                onec_args_dict["keep_device"] = True
 
             pb.update(
                 i,
@@ -241,8 +241,8 @@ def base_image_interrogator(args_dict):
             mmproj_file=mmproj_file,
             image=image,
             options=options,
-            system=system_text,
-            question=question_text,
+            # system=system_text,
+            # question=question_text,
         )
     else:
 
