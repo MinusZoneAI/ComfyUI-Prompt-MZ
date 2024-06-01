@@ -6,38 +6,10 @@ import subprocess
 import sys
 import torch
 try:
-    import mz_prompt_utils
-    import mz_prompt_webserver
+    from . import mz_prompt_utils
+    from . import mz_prompt_webserver
 except ImportError:
     pass
-
-
-def LlamaCppOptions():
-    return {
-        "n_ctx": 2048,
-        "n_batch": 2048,
-        "n_threads": 0,
-        "n_threads_batch": 0,
-        "split_mode": ["LLAMA_SPLIT_MODE_NONE", "LLAMA_SPLIT_MODE_LAYER", "LLAMA_SPLIT_MODE_ROW",],
-        "main_gpu": 0,
-        "n_gpu_layers": -1,
-
-
-        "max_tokens": 4096,
-        "temperature": 1.6,
-        "top_p": 0.95,
-        "min_p": 0.05,
-        "typical_p": 1.0,
-        "stop": "",
-        "frequency_penalty": 0.0,
-        "presence_penalty": 0.0,
-        "repeat_penalty": 1.1,
-        "top_k": 50,
-        "tfs_z": 1.0,
-        "mirostat_mode": ["none", "mirostat", "mirostat_v2"],
-        "mirostat_tau": 5.0,
-        "mirostat_eta": 0.1,
-    }
 
 
 def check_llama_cpp_requirements():
@@ -103,6 +75,32 @@ def check_llama_cpp_requirements():
             print("llama_cpp installed successfully. (llama_cpp安装成功)")
 
 
+def LlamaCppOptions():
+    return {
+        "n_ctx": 2048,
+        "n_batch": 2048,
+        "n_threads": 0,
+        "n_threads_batch": 0,
+        "split_mode": ["LLAMA_SPLIT_MODE_NONE", "LLAMA_SPLIT_MODE_LAYER", "LLAMA_SPLIT_MODE_ROW",],
+        "main_gpu": 0,
+        "n_gpu_layers": -1,
+        "max_tokens": 4096,
+        "temperature": 1.6,
+        "top_p": 0.95,
+        "min_p": 0.05,
+        "typical_p": 1.0,
+        "stop": "",
+        "frequency_penalty": 0.0,
+        "presence_penalty": 0.0,
+        "repeat_penalty": 1.1,
+        "top_k": 50,
+        "tfs_z": 1.0,
+        "mirostat_mode": ["none", "mirostat", "mirostat_v2"],
+        "mirostat_tau": 5.0,
+        "mirostat_eta": 0.1,
+    }
+
+
 def freed_gpu_memory(model_file):
     check_llama_cpp_requirements()
 
@@ -124,6 +122,7 @@ def freed_gpu_memory(model_file):
 def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     if options is None:
         options = {}
+    options = options.copy()
     print(f"Find local model file: {model_file}")
     init_opts = ["n_ctx", "logits_all", "chat_format", "n_gpu_layers"]
 
@@ -180,6 +179,8 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
             f"llama_cpp_model_and_opt_{model_file}", model_and_opt)
 
     model = model_and_opt.get("model")
+    model.set_seed(options.get("seed", -1))
+    model.reset()
 
     response_format = options.get("response_format", None)
     mz_prompt_utils.Utils.print_log(
@@ -237,35 +238,8 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
     return result
 
 
-def get_schema_base_type(t):
-    return {
-        "type": t,
-    }
-
-
-def get_schema_obj(keys_type={}, required=[]):
-    item = {}
-    for key, value in keys_type.items():
-        if type(value) == str:
-            value = get_schema_base_type(value)
-        item[key] = value
-    return {
-        "type": "object",
-        "properties": item,
-        "required": required
-    }
-
-
-def get_schema_array(item_type="string"):
-    if type(item_type) == str:
-        item_type = get_schema_base_type(item_type)
-    return {
-        "type": "array",
-        "items": item_type,
-    }
-
-
 def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=None, question="", schema={}, options={}):
+    options = options.copy()
     if system is None:
         system = ""
         messages = [
@@ -317,6 +291,7 @@ def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=No
 def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, question="", options={}):
     if options is None:
         options = {}
+    options = options.copy()
     if system is None:
         system = ""
         messages = [
@@ -357,6 +332,8 @@ def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, ques
 def llava_cpp_messages(model_file, chat_handler, messages, options={}):
     if options is None:
         options = {}
+
+    options = options.copy()
     options["logits_all"] = True
     options["n_ctx"] = max(4096, options.get("n_ctx", 4096))
     return llama_cpp_messages(model_file, chat_handler, messages, options)
@@ -367,7 +344,7 @@ def llava_cpp_simple_interrogator(
         image=None, options={}):
     if options is None:
         options = {}
-
+    options = options.copy()
     check_llama_cpp_requirements()
 
     content = []
@@ -380,6 +357,7 @@ def llava_cpp_simple_interrogator(
     check_llama_cpp_requirements()
     from llama_cpp.llama_chat_format import Llava15ChatHandler
     if mmproj_file is not None:
+        mz_prompt_utils.Utils.print_log(f"llava_cpp_simple_interrogator mmproj_file: {mmproj_file}")
         chat_handler = Llava15ChatHandler(clip_model_path=mmproj_file)
 
     return llava_cpp_messages(model_file, chat_handler, [
@@ -392,237 +370,3 @@ def llava_cpp_simple_interrogator(
             "content": content,
         },
     ], options=options)
-
-
-def llava_cpp_simple_interrogator_to_json(
-        model_file, mmproj_file, system="You are an assistant who perfectly describes images.", question="Describe this image in detail please\nuse json format for output:",
-        image=None, schema={}, options={}):
-
-    response_format = {
-        "type": "json_object",
-        "schema": schema,
-    }
-    options["response_format"] = response_format
-    options["chat_format"] = "chatml"
-
-    result = llava_cpp_simple_interrogator(
-        model_file, mmproj_file, system=system, question=question, image=image, options=options)
-    return result
-
-
-high_quality_prompt = "((high quality:1.4), (best quality:1.4), (masterpiece:1.4), (8K resolution), (2k wallpaper))"
-style_presets_prompt = {
-    "none": "",
-    "high_quality": high_quality_prompt,
-    "photography": f"{high_quality_prompt}, (RAW photo, best quality), (realistic, photo-realistic:1.2), (bokeh, cinematic shot, dynamic composition, incredibly detailed, sharpen, details, intricate detail, professional lighting, film lighting, 35mm, anamorphic, lightroom, cinematography, bokeh, lens flare, film grain, HDR10, 8K)",
-    "illustration": f"{high_quality_prompt}, ((detailed matte painting, intricate detail, splash screen, complementary colors), (detailed),(intricate details),illustration,an extremely delicate and beautiful,ultra-detailed,highres,extremely detailed)",
-}
-
-
-def get_style_presets():
-    return [
-        "none",
-        "high_quality",
-        "photography",
-        "illustration",
-    ]
-
-
-def base_query_beautify_prompt_text(args_dict):
-    model_file = args_dict.get("llama_cpp_model", "")
-
-    text = args_dict.get("text", "")
-    style_presets = args_dict.get("style_presets", "")
-    options = args_dict.get("llama_cpp_options", {})
-    keep_device = args_dict.get("keep_device", False)
-    seed = args_dict.get("seed", -1)
-    options["seed"] = seed
-
-    import mz_prompts
-    importlib.reload(mz_prompts)
-
-    customize_instruct = args_dict.get("customize_instruct", None)
-    mz_prompt_utils.Utils.print_log(
-        f"customize_instruct: {customize_instruct}")
-    try:
-        schema = None
-        if customize_instruct is None:
-            schema = get_schema_obj(
-                keys_type={
-                    "description": get_schema_base_type("string"),
-                    "long_prompt": get_schema_base_type("string"),
-                    "main_color_word": get_schema_base_type("string"),
-                    "camera_angle_word": get_schema_base_type("string"),
-                    "style_words": get_schema_array("string"),
-                    "subject_words": get_schema_array("string"),
-                    "light_words": get_schema_array("string"),
-                    "environment_words": get_schema_array("string"),
-                },
-                required=[
-                    "description",
-                    "long_prompt",
-                    "main_color_word",
-                    "camera_angle_word",
-                    "style_words",
-                    "subject_words",
-                    "light_words",
-                    "environment_words",
-                ]
-            )
-
-            question = f"IDEA: {style_presets},{text}"
-            if style_presets == "none":
-                question = f"IDEA: {text}"
-
-            system_prompt = mz_prompts.Beautify_Prompt + mz_prompts.Long_prompt + "\n"
-
-        else:
-
-            system_prompt = customize_instruct.get("system", "")
-            question = customize_instruct.get("instruct", "%text%")
-
-            system_prompt = system_prompt.replace("%text%", text)
-            question = question.replace("%text%", text)
-
-            mz_prompt_utils.Utils.print_log(f"system_prompt: {system_prompt}")
-            mz_prompt_utils.Utils.print_log(f"question: {question}")
-
-        if schema is not None:
-            response_json = llama_cpp_simple_interrogator_to_json(
-                model_file=model_file,
-                system=system_prompt,
-                question=question,
-                schema=schema,
-                options=options,
-            )
-            mz_prompt_utils.Utils.print_log(f"response_json: {response_json}")
-
-            response = json.loads(response_json)
-            full_responses = []
-
-            if response["description"] != "":
-                full_responses.append(f"({response['description']})")
-            if response["long_prompt"] != "":
-                full_responses.append(f"({response['long_prompt']})")
-            if response["main_color_word"] != "":
-                full_responses.append(f"({response['main_color_word']})")
-            if response["camera_angle_word"] != "":
-                full_responses.append(f"({response['camera_angle_word']})")
-
-            response["style_words"] = [
-                x for x in response["style_words"] if x != ""]
-            if len(response["style_words"]) > 0:
-                full_responses.append(
-                    f"({', '.join(response['style_words'])})")
-
-            response["subject_words"] = [
-                x for x in response["subject_words"] if x != ""]
-            if len(response["subject_words"]) > 0:
-                full_responses.append(
-                    f"({', '.join(response['subject_words'])})")
-
-            response["light_words"] = [
-                x for x in response["light_words"] if x != ""]
-            if len(response["light_words"]) > 0:
-                full_responses.append(
-                    f"({', '.join(response['light_words'])})")
-
-            response["environment_words"] = [
-                x for x in response["environment_words"] if x != ""]
-            if len(response["environment_words"]) > 0:
-                full_responses.append(
-                    f"({', '.join(response['environment_words'])})")
-
-            full_response = ", ".join(full_responses)
-        else:
-            full_response = llama_cpp_simple_interrogator(
-                model_file=model_file,
-                system=system_prompt,
-                question=question,
-                options=options,
-            )
-
-            start_str = customize_instruct.get("start_str", "")
-            if start_str != "" and full_response.find(start_str) != -1:
-                full_response_list = full_response.split(start_str)
-                # 删除第一个元素
-                full_response_list.pop(0)
-                full_response = start_str.join(full_response_list)
-
-            end_str = customize_instruct.get("end_str", "")
-            if end_str != "" and full_response.find(end_str) != -1:
-                full_response_list = full_response.split(end_str)
-                # 删除最后一个元素
-                full_response_list.pop()
-                full_response = end_str.join(full_response_list)
-
-        if keep_device is False:
-            freed_gpu_memory(model_file=model_file)
-
-        # 去除换行
-        while full_response.find("\n") != -1:
-            full_response = full_response.replace("\n", " ")
-
-        # 句号换成逗号
-        while full_response.find(".") != -1:
-            full_response = full_response.replace(".", ",")
-
-        # 去除多余逗号
-        while full_response.find(",,") != -1:
-            full_response = full_response.replace(",,", ",")
-        while full_response.find(", ,") != -1:
-            full_response = full_response.replace(", ,", ",")
-
-        full_response = mz_prompt_utils.Utils.prompt_zh_to_en(full_response)
-
-        style_presets_prompt_text = style_presets_prompt.get(style_presets, "")
-
-        if style_presets_prompt_text != "":
-            full_response = f"{style_presets_prompt_text}, {full_response}"
-
-        return full_response
-
-    except Exception as e:
-        freed_gpu_memory(model_file=model_file)
-        # mz_utils.Utils.print_log(f"Error in auto_prompt_text: {e}")
-        raise e
-
-
-def get_image_composition_json_schema():
-    system = "Please make a specific composition of the proposed content. You need to have the width and height of the overall picture and a list of specific element positions."
-    return system, {
-        "type": "object",
-        "properties": {
-            "width": {
-                "type": "number"
-            },
-            "height": {
-                "type": "number"
-            },
-            "bbox": {
-                "type": "array",
-                        "items": {
-                            "type": "object",
-                            "properties": {
-                                "english_name": {
-                                    "type": "string"
-                                },
-                                "left": {
-                                    "type": "number"
-                                },
-                                "top": {
-                                    "type": "number"
-                                },
-                                "width": {
-                                    "type": "number"
-                                },
-                                "height": {
-                                    "type": "number"
-                                }
-                            },
-                            "required": ["english_name", "left", "top", "width", "height"]
-                        }
-            }
-        },
-        "required": ["width", "height", "bbox"]
-    }

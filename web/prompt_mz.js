@@ -41,25 +41,26 @@ async function waitMessage() {
   };
   websocket.onclose = async (event) => {
     console.log("Connection closed", event);
-    await sleep(1000);
-    await waitMessage();
   };
 
   websocket.onerror = async (event) => {
     console.log("Connection error", event);
-    await sleep(1000);
-    await waitMessage();
   };
 
   for (;;) {
     await sleep(1000);
     try {
+      if (websocket.readyState !== WebSocket.OPEN) {
+        return;
+      }
       websocket.send(
         JSON.stringify({
           type: "ping",
         })
       );
-    } catch (error) {}
+    } catch (error) {
+      return;
+    }
   }
 }
 
@@ -88,6 +89,7 @@ const my_ui = {
       case "MZ_BaseLLamaCPPCLIPTextEncode":
       case "MZ_LLavaImageInterrogator":
       case "MZ_BaseLLavaImageInterrogator":
+      case "MZ_LLamaCPPCLIPTextEncode":
         // Node Created
         const onNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
@@ -95,6 +97,7 @@ const my_ui = {
             ? onNodeCreated.apply(this, arguments)
             : undefined;
 
+          console.log("onNodeCreated:", this);
           const nodeName = this.name + "_" + "customtext";
           const wi = ComfyWidgets.STRING(
             this,
@@ -133,12 +136,14 @@ const my_ui = {
         const onConfigure = nodeType.prototype.onConfigure;
         nodeType.prototype.onConfigure = function (w) {
           onConfigure?.apply(this, arguments);
+           
+          // outSet.call(this, a?.string);
         };
 
         // onExecuted
         const onExecuted = nodeType.prototype.onExecuted;
         nodeType.prototype.onExecuted = function (a, b) {
-          console.log("onExecuted:", arguments);
+          // console.log("onExecuted:", arguments);
           onExecuted?.apply(this, arguments);
 
           outSet.call(this, a?.string);

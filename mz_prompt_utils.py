@@ -165,6 +165,12 @@ class Utils:
         os.makedirs(models_path, exist_ok=True)
         return models_path
 
+    def get_gguf_models_path():
+        models_path = os.path.join(
+            folder_paths.models_dir, "gguf")
+        os.makedirs(models_path, exist_ok=True)
+        return models_path
+
     def translate_text(text, from_code, to_code):
         try:
             import argostranslate
@@ -548,6 +554,84 @@ class Utils:
                 return None
             save_path = Utils.download_file(url, save_path)
         return save_path
+
+    def progress_bar(steps):
+        class pb:
+            def __init__(self, steps):
+                self.steps = steps
+                self.pbar = comfy.utils.ProgressBar(steps)
+
+            def update(self, step, total_steps, pil_img):
+                self.pbar.update_absolute(
+                    step, total_steps, ("JPEG", pil_img, 512))
+
+        return pb(steps)
+
+    def split_en_to_zh(text):
+        # 中文标点转英文标点
+        text = text.replace("，", ",")
+        text = text.replace("。", ".")
+        text = text.replace("？", "?")
+        text = text.replace("！", "!")
+        text = text.replace("；", ";")
+
+        result = []
+        if text.find("\n") != -1:
+            text = text.split("\n")
+            for t in text:
+                if t != "":
+                    result.append(Utils.split_en_to_zh(t))
+            return "\n".join(result)
+
+        if text.find(".") != -1:
+            text = text.split(".")
+            for t in text:
+                if t != "":
+                    result.append(Utils.split_en_to_zh(t))
+            return ". ".join(result)
+
+        if text.find("?") != -1:
+            text = text.split("?")
+            for t in text:
+                if t != "":
+                    result.append(Utils.split_en_to_zh(t))
+            return "? ".join(result)
+
+        if text.find("!") != -1:
+            text = text.split("!")
+            for t in text:
+                if t != "":
+                    result.append(Utils.split_en_to_zh(t))
+            return "! ".join(result)
+
+        if text.find(";") != -1:
+            text = text.split(";")
+            for t in text:
+                if t != "":
+                    result.append(Utils.split_en_to_zh(t))
+            return "; ".join(result)
+
+        if text.find(",") != -1:
+            text = text.split(",")
+            for t in text:
+                if t != "":
+                    result.append(Utils.split_en_to_zh(t))
+            return ", ".join(result)
+        
+        return Utils.en2zh(text)
+
+    def to_debug_prompt(p):
+        if p is None:
+            return ""
+        zh = Utils.en2zh(p)
+        p = p.strip()
+        return f"""
+原文:
+{p}
+
+中文翻译:
+{zh}
+"""
 
 
 modelscope_models_map = {

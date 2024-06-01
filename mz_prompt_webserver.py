@@ -2,7 +2,7 @@
 
 import asyncio
 import uuid
-import mz_prompt_utils
+from . import mz_prompt_utils
 
 
 web_msg_pool = {

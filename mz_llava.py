@@ -1,12 +1,13 @@
 import json
 import os
-import mz_prompt_utils
-import mz_llama_cpp
+from . import mz_prompt_utils
+from . import mz_llama_cpp
+from . import mz_prompts
+from . import mz_llama_core_nodes
+from . import mz_prompt_webserver
 
 import importlib
 
-import mz_prompts
-import mz_prompt_webserver
 
 LLava_models = [
     "llava-1.6-mistral-7b-gguf/llava-v1.6-mistral-7b.Q5_K_M.gguf",
@@ -65,6 +66,7 @@ def get_exist_model(model_name):
 
 
 def image_interrogator(args_dict):
+    args_dict = args_dict.copy()
 
     captioner_config = args_dict.get("captioner_config", None)
     if captioner_config is not None:
@@ -72,6 +74,11 @@ def image_interrogator(args_dict):
         directory = captioner_config.get("directory", None)
         force_update = captioner_config.get("force_update", False)
         caption_suffix = captioner_config.get("caption_suffix", "")
+        retry_keyword = captioner_config.get("retry_keyword", "")
+        retry_keywords = retry_keyword.split(",")
+
+        retry_keywords = [k.strip() for k in retry_keywords]
+        retry_keywords = [k for k in retry_keywords if k != ""]
 
         pre_images = []
         for root, dirs, files in os.walk(directory):
@@ -90,6 +97,8 @@ def image_interrogator(args_dict):
                     })
 
         result = []
+
+        pb = mz_prompt_utils.Utils.progress_bar(len(pre_images))
         for i in range(len(pre_images)):
             pre_image = pre_images[i]
             image_path = pre_image["image_path"]
@@ -104,21 +113,52 @@ def image_interrogator(args_dict):
             if i < len(pre_images) - 1:
                 onec_args_dict["keep_device"] = True
 
-            mz_prompt_webserver.show_toast_success(
-                f"正在处理图片 {image_path}...", 1000)
+            pb.update(
+                i,
+                len(pre_images),
+                pil_image.copy(),
+            )
 
             response = image_interrogator(onec_args_dict)
             response = response.strip()
-            with open(caption_file, "w") as f:
-                f.write(response)
+            is_retry = response == ""
+            for k in retry_keywords:
+                if response.find(k) != -1:
+                    print(f"存在需要重试的关键词 ; Retry keyword found: {k}")
+                    is_retry = True
+                    break
+
+            mz_prompt_utils.Utils.print_log(
+                "\n\nonec_args_dict: ", onec_args_dict)
+            if is_retry:
+                for retry_n in range(5):
+                    print(f"Retry {retry_n+1}...")
+                    onec_args_dict["seed"] = onec_args_dict["seed"] + 1
+                    response = image_interrogator(onec_args_dict)
+                    response = response.strip()
+                    is_retry = response == ""
+                    for k in retry_keywords:
+                        if response.find(k) != -1:
+                            print(f"存在需要重试的关键词 ; Retry keyword found: {k}")
+                            is_retry = True
+                            break
+
+                    if is_retry is False:
+                        break
+                if is_retry:
+                    print(f"重试失败,图片被跳过 ; Retry failed")
+                    response = ""
+
+            if response != "":
+                with open(caption_file, "w") as f:
+                    f.write(response)
 
             result.append(response)
-            
 
-            mz_prompt_webserver.show_toast_success(
-                f"提示词保存成功(prompt saved successfully): {caption_file}",
-                1000,
-            )
+            # mz_prompt_webserver.show_toast_success(
+            #     f"提示词保存成功(prompt saved successfully): {caption_file}",
+            #     1000,
+            # )
 
         return result
 
@@ -184,15 +224,25 @@ def base_image_interrogator(args_dict):
     options = args_dict.get("llama_cpp_options", {})
     options["seed"] = seed
 
+    mz_prompt_utils.Utils.print_log(
+        "base_image_interrogator options: ", options)
+    # input("Press Enter to continue...")
+
     image = mz_prompt_utils.Utils.resize_max(image, resolution, resolution)
 
     customize_instruct = args_dict.get("customize_instruct", None)
     if customize_instruct is None:
+
+        system_text = mz_prompts.GPT4VImageCaptioner_System
+        question_text = mz_prompts.GPT4VImageCaptioner_Prompt
+
         response = mz_llama_cpp.llava_cpp_simple_interrogator(
             model_file=model_file,
             mmproj_file=mmproj_file,
             image=image,
             options=options,
+            # system=system_text,
+            # question=question_text,
         )
     else:
 
@@ -226,18 +276,17 @@ def base_image_interrogator(args_dict):
         response = full_response
 
     sd_format = args_dict.get("sd_format", "v1")
+
     if sd_format == "v1" and customize_instruct is None:
-
-        mz_prompt_utils.Utils.print_log(f"response: {response}")
-
-        schema = mz_llama_cpp.get_schema_obj(
+        mz_prompt_utils.Utils.print_log(f"response v1: {response}")
+        schema = mz_llama_core_nodes.get_schema_obj(
             keys_type={
-                "short_describes": mz_llama_cpp.get_schema_base_type("string"),
-                "subject_tags": mz_llama_cpp.get_schema_array("string"),
-                "action_tags": mz_llama_cpp.get_schema_array("string"),
-                "light_tags": mz_llama_cpp.get_schema_array("string"),
-                "scenes_tags": mz_llama_cpp.get_schema_array("string"),
-                "other_tags": mz_llama_cpp.get_schema_array("string"),
+                "short_describes": mz_llama_core_nodes.get_schema_base_type("string"),
+                "subject_tags": mz_llama_core_nodes.get_schema_array("string"),
+                "action_tags": mz_llama_core_nodes.get_schema_array("string"),
+                "light_tags": mz_llama_core_nodes.get_schema_array("string"),
+                "scenes_tags": mz_llama_core_nodes.get_schema_array("string"),
+                "other_tags": mz_llama_core_nodes.get_schema_array("string"),
             },
             required=[
                 "short_describes",

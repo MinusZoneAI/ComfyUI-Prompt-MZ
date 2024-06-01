@@ -26,6 +26,8 @@ ZH_Replace_Map = {
     "ImageInterrogator": "图像反推",
     "customize_instruct": "自定义指令",
     "CustomizeInstruct": "自定义指令",
+    "deprecated": "已废弃",
+    "LLamaCPPModelConfigManualSelect": "llama.cpp模型配置手动选择",
 }
 
 
