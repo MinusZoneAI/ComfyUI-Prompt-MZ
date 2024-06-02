@@ -22,11 +22,40 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 2. Restart ComfyUI.
  
 ## Nodes
+
++ CLIPTextEncode (LLamaCPP Universal)
+  
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/1f66ce10-920f-4ada-9287-f86a51782bff)
+
+
++ ModelConfigManualSelect(LLamaCPP)
+  
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/42473248-8902-43d7-a08b-37bb3d20b4aa)
+
++ ModelConfigDownloaderSelect(LLamaCPP)
+  
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/6a2f561b-deb0-43d3-900f-c9d6b23d0ea4)
+
+
+
++ CLIPTextEncode (ImageInterrogator)
+  
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/e76eb5dc-1c6c-4a59-8197-8bd7b56c3889)
+
++ ModelConfigManualSelect(ImageInterrogator)
+  
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/71a48734-e3f3-4ced-a8d7-cd334340efdb)
+
+
++ ModelConfigDownloaderSelect(ImageInterrogator)
+  
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/bfec7696-1f86-4fe5-9dc3-807b39366524)
+
+
+
 + CLIPTextEncode (OpenAI API)
 
   ![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/14e9a96a-ec1b-481d-8f5a-43cd752ad01b)
-
-
 
 + CLIPTextEncode (Phi-3)
 
