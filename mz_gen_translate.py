@@ -8,6 +8,8 @@ COMFY_PATH = Path(folder_paths.__file__).parent
 
 
 ZH_Replace_Map = {
+    "mmproj_model_name": "mmproj模型名称",
+    "model_name": "模型名称",
     "llama_cpp_model": "llama.cpp模型",
     "mmproj_model": "mmproj模型",
     "resolution": "分辨率",
@@ -22,6 +24,7 @@ ZH_Replace_Map = {
     "keep_device": "模型常驻显存",
     "llama_cpp_options": "llama.cpp可选配置",
     "Options": "可选配置",
+    "LLamaCPPModelConfigManualSelect": "llama.cpp模型配置手动选择",
     "LLamaCPP": "llama.cpp",
     "CLIPTextEncode": "CLIP文本编码器",
     "clip": "CLIP",
@@ -29,7 +32,6 @@ ZH_Replace_Map = {
     "customize_instruct": "自定义指令",
     "CustomizeInstruct": "自定义指令",
     "deprecated": "已废弃",
-    "LLamaCPPModelConfigManualSelect": "llama.cpp模型配置手动选择",
     "ModelConfigManualSelect": "手动模型选择器",
     "ModelConfigDownloaderSelect": "预设模型下载器",
     "captioner_config": "打标器配置",

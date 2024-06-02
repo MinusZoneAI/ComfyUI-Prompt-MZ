@@ -114,13 +114,12 @@ class MZ_LLamaCPPModelConfig_DownloaderSelect:
             "optional": {
             },
         }
-    
+
     RETURN_TYPES = ("LLamaCPPModelConfig",)
     RETURN_NAMES = ("llama_cpp_model_config",)
 
     FUNCTION = "create"
     CATEGORY = f"{CATEGORY_NAME}/others"
-
 
     def create(self, **kwargs):
         kwargs = kwargs.copy()
@@ -133,7 +132,9 @@ class MZ_LLamaCPPModelConfig_DownloaderSelect:
 
 
 NODE_CLASS_MAPPINGS["MZ_LLamaCPPModelConfig_DownloaderSelect"] = MZ_LLamaCPPModelConfig_DownloaderSelect
-NODE_DISPLAY_NAME_MAPPINGS["MZ_LLamaCPPModelConfig_DownloaderSelect"] = f"{AUTHOR_NAME} - ModelConfigDownloaderSelect(LLamaCPP)"
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_LLamaCPPModelConfig_DownloaderSelect"] = f"{AUTHOR_NAME} - ModelConfigDownloaderSelect(LLamaCPP)"
+
 
 class MZ_LLamaCPPCLIPTextEncode:
     @classmethod
@@ -232,7 +233,7 @@ class MZ_CustomizeInstruct:
         return {
             "required": {
                 "system": ("STRING", {"multiline": True, "default": mz_prompts.Long_prompt}),
-                "instruct": ("STRING", {"multiline": True, "default": "Short: %text%"}),
+                "instruct": ("STRING", {"multiline": True, "default": ""}),
             },
         }
 
@@ -334,7 +335,7 @@ class MZ_OpenAIApiCLIPTextEncode:
     def encode(self, **kwargs):
         kwargs = kwargs.copy()
 
-        import mz_openaiapi
+        from . import mz_openaiapi
         importlib.reload(mz_openaiapi)
 
         if kwargs.get("api_key", "").endswith("******"):
@@ -450,6 +451,50 @@ class MZ_ImageInterrogatorModelConfig_ManualSelect:
 NODE_CLASS_MAPPINGS["MZ_ImageInterrogatorModelConfig_ManualSelect"] = MZ_ImageInterrogatorModelConfig_ManualSelect
 NODE_DISPLAY_NAME_MAPPINGS[
     "MZ_ImageInterrogatorModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - ModelConfigManualSelect(ImageInterrogator)"
+
+
+class MZ_ImageInterrogatorModelConfig_DownloaderSelect:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model_name": ([
+                    "ggml_llava1_5-7b-q4_k_m",
+                    "ggml_bakllava-1-q4_k_m",
+                    "llava_v1_6_mistral_7b_q5_k_m",
+                ],),
+                "mmproj_model_name": ([
+                    "auto",
+                    "ggml_llava1_5-7b-mmproj-f16",
+                    "ggml_bakllava-1-mmproj-f16",
+                    "llava_v1_6_mistral_7b_mmproj_f16",
+                ],),
+            },
+            "optional": {
+            },
+        }
+
+    RETURN_TYPES = ("ImageInterrogatorModelConfig",)
+    RETURN_NAMES = ("image_interrogator_model",)
+
+    FUNCTION = "create"
+    CATEGORY = f"{CATEGORY_NAME}/others"
+
+    def create(self, **kwargs):
+        kwargs = kwargs.copy()
+        model_name = kwargs.get("model_name")
+        mmproj_model_name = kwargs.get("mmproj_model_name", "auto")
+        return ({
+            "type": "DownloaderSelect",
+            "model_name": model_name,
+            "mmproj_model_name": mmproj_model_name,
+        },)
+
+
+NODE_CLASS_MAPPINGS["MZ_ImageInterrogatorModelConfig_DownloaderSelect"] = MZ_ImageInterrogatorModelConfig_DownloaderSelect
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_ImageInterrogatorModelConfig_DownloaderSelect"] = f"{AUTHOR_NAME} - ModelConfigDownloaderSelect(ImageInterrogator)"
+
 
 from . import mz_gen_translate
 mz_gen_translate.gen_translate(NODE_DISPLAY_NAME_MAPPINGS, NODE_CLASS_MAPPINGS)

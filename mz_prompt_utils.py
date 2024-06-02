@@ -675,6 +675,12 @@ class Utils:
         return Utils.file_hash(file_path, hashlib.sha256)
 
     def get_auto_model_fullpath(model_name):
+        fullpath = Utils.cache_get(f"get_auto_model_fullpath_{model_name}")
+        Utils.print_log(f"get_auto_model_fullpath_{model_name} => {fullpath}")
+        if fullpath is not None:
+            if os.path.exists(fullpath):
+                return fullpath
+
         find_paths = []
         target_sha256 = ""
         file_path = ""
@@ -703,12 +709,31 @@ class Utils:
                 for root, dirs, files in os.walk(find_fullpath):
                     for file in files:
                         if target_sha256 == Utils.file_sha256(os.path.join(root, file)):
+                            Utils.cache_set(f"get_auto_model_fullpath_{model_name}", os.path.join(root, file))
                             return os.path.join(root, file)
                         else:
                             Utils.print_log(
                                 f"Model {os.path.join(root, file)} file hash not match, {target_sha256} != {Utils.file_sha256(os.path.join(root, file))}")
 
-        return Utils.download_model({"url": download_url, "output": file_path})
+        result = Utils.download_model({"url": download_url, "output": file_path})
+        Utils.cache_set(f"get_auto_model_fullpath_{model_name}", result)
+        return result
+
+
+    def testDownloadSpeed(url):
+        try:
+            print(f"Testing download speed for {url}")
+            start = time.time()
+            # 下载2M数据
+            headers = {"Range": "bytes=0-2097151"}
+            _ = requests.get(url, headers=headers, timeout=5)
+            end = time.time()
+            print(
+                f"Download speed: {round(5.00 / (float(end) - float(start)) / 1024, 2)} KB/s")
+            return float(end) - float(start) < 4
+        except Exception as e:
+            print(f"Test download speed failed: {e}")
+            return False
 
 
 MODEL_ZOO = [

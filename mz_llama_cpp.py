@@ -13,9 +13,13 @@ except ImportError:
 
 
 def check_llama_cpp_requirements():
-    last_version = "0.2.63"
+    min_version = "0.2.63"
+    last_version = "0.2.76"
     try:
         from llama_cpp import Llama
+        import llama_cpp
+        if llama_cpp.__version__ < min_version:
+            raise ImportError("llama_cpp version is too low. (llama_cpp版本过低)")
     except ImportError:
         py_version = ""
         if sys.version_info.major == 3:
@@ -65,9 +69,39 @@ def check_llama_cpp_requirements():
             wheel_url = f"https://github.com/abetlen/llama-cpp-python/releases/download/v{last_version}-{cuda_version}/{wheel_name}"
 
         print(f"pip install {wheel_url}")
-        ret = subprocess.run([
-            sys.executable, "-m",
-            "pip", "install", wheel_url], check=True)
+        modelscope_url = f"https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llama-cpp-python-win%2F{cuda_version}%2F{wheel_name}"
+        if mz_prompt_utils.Utils.testDownloadSpeed(wheel_url):
+            ret = subprocess.run([
+                sys.executable, "-m",
+                "pip", "install", wheel_url], check=True)
+        elif mz_prompt_utils.Utils.testDownloadSpeed(modelscope_url):
+            import tempfile
+            whl_download_file = os.path.join(
+                tempfile.gettempdir(), wheel_name)
+            mz_prompt_utils.Utils.download_file(
+                modelscope_url, whl_download_file)
+            print(f"pip install {whl_download_file}")
+            ret = subprocess.run([
+                sys.executable, "-m",
+                "pip", "install", whl_download_file], check=True)
+        else:
+
+            # 兜底方案
+            modelscope_url = f"https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llama-cpp-python-win%2Fcu121%2Fllama_cpp_python-0.2.76-cp310-cp310-win_amd64.whl"
+            if py_version == "310" and system_name == "win_amd64" and mz_prompt_utils.Utils.testDownloadSpeed(modelscope_url):
+                import tempfile
+                whl_download_file = os.path.join(
+                    tempfile.gettempdir(), wheel_name)
+                mz_prompt_utils.Utils.download_file(
+                    modelscope_url, whl_download_file)
+                print(f"pip install {whl_download_file}")
+                ret = subprocess.run([
+                    sys.executable, "-m",
+                    "pip", "install", whl_download_file], check=True)
+            else:
+                ret = subprocess.run([
+                    sys.executable, "-m",
+                    "pip", "install", wheel_url], check=True)
 
         if ret.returncode != 0:
             raise ValueError("Failed to install llama_cpp. (安装llama_cpp失败)")
@@ -357,7 +391,8 @@ def llava_cpp_simple_interrogator(
     check_llama_cpp_requirements()
     from llama_cpp.llama_chat_format import Llava15ChatHandler
     if mmproj_file is not None:
-        mz_prompt_utils.Utils.print_log(f"llava_cpp_simple_interrogator mmproj_file: {mmproj_file}")
+        mz_prompt_utils.Utils.print_log(
+            f"llava_cpp_simple_interrogator mmproj_file: {mmproj_file}")
         chat_handler = Llava15ChatHandler(clip_model_path=mmproj_file)
 
     return llava_cpp_messages(model_file, chat_handler, [
