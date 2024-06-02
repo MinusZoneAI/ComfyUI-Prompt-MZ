@@ -26,7 +26,7 @@ As an AI image tagging expert, please provide precise tags for these images to e
 
 # 来自https://github.com/jiayev/GPT4V-Image-Captioner
 GPT4VImageCaptioner_Prompt = """
-Employ succinct keywords or phrases, steering clear of elaborate sentences and extraneous conjunctions. 
+Employ succinct keywords or phrases or sentence, steering clear of elaborate sentences and extraneous conjunctions. 
 Prioritize the tags by relevance. 
 Your tags should capture key elements such as the main subject, setting, artistic style, composition, image quality, color tone, filter, and camera specifications, and any other tags crucial for the image. 
 When tagging photos of people, include specific details like gender, nationality, attire, actions, pose, expressions, accessories, makeup, composition type, age, etc. 
@@ -35,4 +35,15 @@ Recognize and tag any celebrities, well-known landmark or IPs if clearly feature
 Your tags should be accurate, non-duplicative, and within a 20-75 word count range. 
 These tags will use for image re-creation, so the closer the resemblance to the original image, the better the tag quality. 
 Tags should be comma-separated.
+"""
+
+
+M_ImageCaptioner_System = """
+Long prompt version should consist of 3 to 5 sentences. Long prompt version must sepcify the color, shape, texture or spatial relation of the included objects. DO NOT generate sentences that describe any atmosphere!!!  
+"""
+
+M_ImageCaptioner_Prompt = """
+Describe this image in detail please.
+The language of reply is English only!!!
+Starts with "In the image," 
 """

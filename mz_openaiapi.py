@@ -5,6 +5,7 @@ import subprocess
 
 from . import mz_prompt_utils
 from . import mz_llama_cpp
+from . import mz_llama_core_nodes
 from . import mz_prompts
 
 
@@ -63,16 +64,16 @@ def query_beautify_prompt_text(args_dict):
 
     schema = None
     if customize_instruct is None:
-        schema = mz_llama_cpp.get_schema_obj(
+        schema = mz_llama_core_nodes.get_schema_obj(
             keys_type={
-                "description": mz_llama_cpp.get_schema_base_type("string"),
-                "long_prompt": mz_llama_cpp.get_schema_base_type("string"),
-                "main_color_word": mz_llama_cpp.get_schema_base_type("string"),
-                "camera_angle_word": mz_llama_cpp.get_schema_base_type("string"),
-                "style_words": mz_llama_cpp.get_schema_array("string"),
-                "subject_words": mz_llama_cpp.get_schema_array("string"),
-                "light_words": mz_llama_cpp.get_schema_array("string"),
-                "environment_words": mz_llama_cpp.get_schema_array("string"),
+                "description": mz_llama_core_nodes.get_schema_base_type("string"),
+                "long_prompt": mz_llama_core_nodes.get_schema_base_type("string"),
+                "main_color_word": mz_llama_core_nodes.get_schema_base_type("string"),
+                "camera_angle_word": mz_llama_core_nodes.get_schema_base_type("string"),
+                "style_words": mz_llama_core_nodes.get_schema_array("string"),
+                "subject_words": mz_llama_core_nodes.get_schema_array("string"),
+                "light_words": mz_llama_core_nodes.get_schema_array("string"),
+                "environment_words": mz_llama_core_nodes.get_schema_array("string"),
             },
             required=[
                 "description",
@@ -184,7 +185,7 @@ def query_beautify_prompt_text(args_dict):
         full_response = full_response.replace(",,", ",")
     while full_response.find(", ,") != -1:
         full_response = full_response.replace(", ,", ",")
-    style_presets_prompt_text = mz_llama_cpp.style_presets_prompt.get(
+    style_presets_prompt_text = mz_llama_core_nodes.style_presets_prompt.get(
         style_presets, "")
     if style_presets_prompt_text != "":
         full_response = f"{style_presets_prompt_text}, {full_response}"

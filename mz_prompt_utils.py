@@ -494,8 +494,8 @@ class Utils:
                     base_model_path, zone_path), exist_ok=True)
                 Utils.download_file(url, save_path)
 
-            Utils.print_log(
-                f"File {save_path} => {os.path.getsize(save_path)} ")
+            # Utils.print_log(
+            #     f"File {save_path} => {os.path.getsize(save_path)} ")
 
             # 获取大小
             if os.path.getsize(save_path) == 0:
@@ -617,7 +617,7 @@ class Utils:
                 if t != "":
                     result.append(Utils.split_en_to_zh(t))
             return ", ".join(result)
-        
+
         return Utils.en2zh(text)
 
     def to_debug_prompt(p):
@@ -633,6 +633,256 @@ class Utils:
 {zh}
 """
 
+    def get_gguf_files():
+        gguf_dir = Utils.get_gguf_models_path()
+        if not os.path.exists(gguf_dir):
+            os.makedirs(gguf_dir)
+        gguf_files = []
+        # walk gguf_dir
+        for root, dirs, files in os.walk(gguf_dir):
+            for file in files:
+                if file.endswith(".gguf"):
+                    gguf_files.append(
+                        os.path.relpath(os.path.join(root, file), gguf_dir))
+
+        return gguf_files
+
+    def get_comfyui_models_path():
+        return folder_paths.models_dir
+
+    def download_model(model_info, only_get_path=False):
+
+        url = model_info["url"]
+        output = model_info["output"]
+        save_path = os.path.abspath(
+            os.path.join(Utils.get_comfyui_models_path(), output))
+        if not os.path.exists(save_path):
+            if only_get_path:
+                return None
+            save_path = Utils.download_file(url, save_path)
+        return save_path
+
+    def file_hash(file_path, hash_method):
+        if not os.path.isfile(file_path):
+            return ''
+        h = hash_method()
+        with open(file_path, 'rb') as f:
+            while b := f.read(8192):
+                h.update(b)
+        return h.hexdigest()
+
+    def file_sha256(file_path):
+        return Utils.file_hash(file_path, hashlib.sha256)
+
+    def get_auto_model_fullpath(model_name):
+        fullpath = Utils.cache_get(f"get_auto_model_fullpath_{model_name}")
+        Utils.print_log(f"get_auto_model_fullpath_{model_name} => {fullpath}")
+        if fullpath is not None:
+            if os.path.exists(fullpath):
+                return fullpath
+
+        find_paths = []
+        target_sha256 = ""
+        file_path = ""
+        download_url = ""
+        for model in MODEL_ZOO:
+            if model["model"] == model_name:
+                find_paths = model["find_path"]
+                target_sha256 = model["SHA256"]
+                file_path = model["file_path"]
+                download_url = model["url"]
+                break
+
+        if target_sha256 == "":
+            raise ValueError(f"Model {model_name} not found in MODEL_ZOO")
+
+        if os.path.exists(file_path):
+            if Utils.file_sha256(file_path) != target_sha256:
+                print(f"Model {model_name} file hash not match...")
+            return file_path
+
+        for find_path in find_paths:
+            find_fullpath = os.path.join(
+                Utils.get_comfyui_models_path(), find_path)
+
+            if os.path.exists(find_fullpath):
+                for root, dirs, files in os.walk(find_fullpath):
+                    for file in files:
+                        if target_sha256 == Utils.file_sha256(os.path.join(root, file)):
+                            Utils.cache_set(f"get_auto_model_fullpath_{model_name}", os.path.join(root, file))
+                            return os.path.join(root, file)
+                        else:
+                            Utils.print_log(
+                                f"Model {os.path.join(root, file)} file hash not match, {target_sha256} != {Utils.file_sha256(os.path.join(root, file))}")
+
+        result = Utils.download_model({"url": download_url, "output": file_path})
+        Utils.cache_set(f"get_auto_model_fullpath_{model_name}", result)
+        return result
+
+
+    def testDownloadSpeed(url):
+        try:
+            print(f"Testing download speed for {url}")
+            start = time.time()
+            # 下载2M数据
+            headers = {"Range": "bytes=0-2097151"}
+            _ = requests.get(url, headers=headers, timeout=5)
+            end = time.time()
+            print(
+                f"Download speed: {round(5.00 / (float(end) - float(start)) / 1024, 2)} KB/s")
+            return float(end) - float(start) < 4
+        except Exception as e:
+            print(f"Test download speed failed: {e}")
+            return False
+
+
+MODEL_ZOO = [
+    {
+        "model": "Meta-Llama-3-8B-Instruct-Q4_K_M",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
+        "url": "https://modelscope.cn/api/v1/models/LLM-Research/Meta-Llama-3-8B-Instruct-GGUF/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
+        "SHA256": "57b26bac2df51111affec600077708de06133b8f49e697723672657c7cbe3b9c",
+    },
+    {
+        "model": "Meta-Llama-3-8B-Q4_K_M",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/Meta-Llama-3-8B-Q4_K_M.gguf",
+        "url": "https://modelscope.cn/api/v1/models/LLM-Research/Meta-Llama-3-8B-GGUF/repo?Revision=master&FilePath=Meta-Llama-3-8B-Q4_K_M.gguf",
+        "SHA256": "b3413ff367d0c568d1ebb06faa6d1e44c3a7fc2ad8eea40b1685788ce4f90e3e",
+    },
+    {
+        "model": "Phi-3-mini-4k-instruct-q4",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/Phi-3-mini-4k-instruct-q4.gguf",
+        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=Phi-3-mini-4k-instruct-gguf%2FPhi-3-mini-4k-instruct-q4.gguf",
+        "SHA256": "1cd9a9df07350196623f93bf4829cf228959e07ad32f787b8fdd7f5956f5b9de",
+    },
+    {
+        "model": "llama3-zh.Q4_K_M",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/llama3-zh.Q4_K_M.gguf",
+        "url": "https://modelscope.cn/api/v1/models/ModelM/Llama-3-8b-zh-gguf/repo?Revision=master&FilePath=llama3-zh.Q4_K_M.gguf",
+        "SHA256": "1b04ec22e4079af8064a8378d55d2cd79e43eff9faf4bbe8f341f1fd792a53cd",
+    },
+    {
+        "model": "llama3_8b_instruct_dpo_zh-Q4_K_M",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/llama3_8b_instruct_dpo_zh-Q4_K_M.gguf",
+        "url": "https://modelscope.cn/api/v1/models/shareAI/llama-3-8b-Instruct-dpo-chinese-loftq-gguf/repo?Revision=master&FilePath=llama3_8b_instruct_dpo_zh-Q4_K_M.gguf",
+        "SHA256": "5231f5f119e1ef7db058211b8a140b530930a40b9b89c54db8455cc20ae3f699",
+    },
+    {
+        "model": "qwen1_5-14b-chat-q4_k_m",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/qwen1_5-14b-chat-q4_k_m.gguf",
+        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-14B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-14b-chat-q4_k_m.gguf",
+        "SHA256": "46fbff2797c39c2d6aa555db0b0b4fe3f41b712a9b45266e438aa9a5047c0563",
+    },
+    {
+        "model": "qwen1_5-7b-chat-q4_k_m",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/qwen1_5-7b-chat-q4_k_m.gguf",
+        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-7B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-7b-chat-q4_k_m.gguf",
+        "SHA256": "d7f132b1eff9ce35acf8e83ab96d2bc87eaedb68244e467bbc99e9f46a122a4c",
+    },
+    {
+        "model": "qwen1_5-4b-chat-q4_k_m",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/qwen1_5-4b-chat-q4_k_m.gguf",
+        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-4B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-4b-chat-q4_k_m.gguf",
+        "SHA256": "426143ccd3241b9547c2b70c622b4f4ef3436ee07e44991bd69ad84b36cd9b9b",
+    },
+    {
+        "model": "qwen1_5-1_8b-chat-q4_k_m",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/qwen1_5-1_8b-chat-q4_k_m.gguf",
+        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-1.8B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-1_8b-chat-q4_k_m.gguf",
+        "SHA256": "702e983c77883426806a2af75d34ab3e462e1b822f9dc23b49e02280c24b2b18",
+    },
+    {
+        "model": "qwen1_5-0_5b-chat-q4_k_m",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/qwen1_5-0_5b-chat-q4_k_m.gguf",
+        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-0.5B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-0_5b-chat-q4_k_m.gguf",
+        "SHA256": "92916b71d32f5afea48fb7383e3b48c5b1c111f5a59f0b83c764ea1d07fe1a3a",
+    },
+    {
+        "model": "ggml_llava1_5-7b-q4_k_m",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/ggml_llava1_5-7b-q4_k_m.gguf",
+        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_llava-v1.5-7b%2Fggml-model-q4_k.gguf",
+        "SHA256": "7ac9c2f7b8d76cc7f3118cdf0953ebab7a7a9b12bad5dbe237219d2ab61765ea",
+    },
+    {
+        "model": "ggml_llava1_5-7b-mmproj-f16",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/ggml_llava1_5-7b-mmproj-f16.gguf",
+        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_llava-v1.5-7b%2Fmmproj-model-f16.gguf",
+        "SHA256": "b7c8ff0f58fca47d28ba92c4443adf8653f3349282cb8d9e6911f22d9b3814fe",
+    },
+    {
+        "model": "ggml_bakllava-1-q4_k_m",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/ggml_bakllava-1-q4_k_m.gguf",
+        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_bakllava-1%2Fggml-model-q5_k.gguf",
+        "SHA256": "c93de1376be9b6977cc94d252a3d165d6059e07b528de0fa762534d9599b27d6",
+    },
+    {
+        "model": "ggml_bakllava-1-mmproj-f16",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/ggml_bakllava-1-mmproj-f16.gguf",
+        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_bakllava-1%2Fmmproj-model-f16.gguf",
+        "SHA256": "2e467eba710002839e0966d5e329942bb836eabd4e787bc713b07eff1d8ea13b",
+    },
+    {
+        "model": "llava_v1_6_mistral_7b_q5_k_m",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/llava_v1_6_mistral_7b_q5_k_m.gguf",
+        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llava-1.6-mistral-7b-gguf%2Fllava-v1.6-mistral-7b.Q5_K_M.gguf",
+        "SHA256": "b1d37fc65ecb80aa8f1ce185bf4d7605bc3c5cc5bcc77a160c3a1b0377631112",
+    },
+    {
+        "model": "llava_v1_6_mistral_7b_mmproj_f16",
+        "find_path": [
+            "gguf",
+        ],
+        "file_path": "gguf/llava_v1_6_mistral_7b_mmproj_f16.gguf",
+        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llava-1.6-mistral-7b-gguf%2Fmmproj-model-f16.gguf",
+        "SHA256": "00205ee8a0d7a381900cd031e43105f86aa0d8c07bf329851e85c71a26632d16",
+    },
+
+]
 
 modelscope_models_map = {
     "llama3": {

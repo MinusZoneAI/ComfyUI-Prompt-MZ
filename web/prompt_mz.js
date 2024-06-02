@@ -90,6 +90,7 @@ const my_ui = {
       case "MZ_LLavaImageInterrogator":
       case "MZ_BaseLLavaImageInterrogator":
       case "MZ_LLamaCPPCLIPTextEncode":
+      case "MZ_ImageInterrogatorCLIPTextEncode":
         // Node Created
         const onNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
@@ -136,7 +137,7 @@ const my_ui = {
         const onConfigure = nodeType.prototype.onConfigure;
         nodeType.prototype.onConfigure = function (w) {
           onConfigure?.apply(this, arguments);
-           
+
           // outSet.call(this, a?.string);
         };
 
