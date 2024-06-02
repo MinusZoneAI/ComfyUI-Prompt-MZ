@@ -575,7 +575,27 @@ class Utils:
 
         return pb(steps)
 
-    def split_en_to_zh(text):
+    def split_en_to_zh(text: str):
+        if text.find("(") != -1 and text.find(")") != -1:
+            sentences = [
+                "",
+            ]
+            for word_index in range(len(text)):
+                if text[word_index] == "(" or text[word_index] == ")":
+                    sentences.append(str(text[word_index]))
+                    sentences.append("")
+                else:
+                    sentences[-1] += str(text[word_index])
+
+            Utils.print_log("not_translated:", sentences)
+            for i in range(len(sentences)):
+                if sentences[i] != "(" and sentences[i] != ")":
+                    sentences[i] = Utils.split_en_to_zh(sentences[i])
+
+            Utils.print_log("translated:", sentences)
+
+            return "".join(sentences)
+
         # 中文标点转英文标点
         text = text.replace("，", ",")
         text = text.replace("。", ".")
@@ -589,6 +609,8 @@ class Utils:
             for t in text:
                 if t != "":
                     result.append(Utils.split_en_to_zh(t))
+                else:
+                    result.append(t)
             return "\n".join(result)
 
         if text.find(".") != -1:
@@ -596,42 +618,65 @@ class Utils:
             for t in text:
                 if t != "":
                     result.append(Utils.split_en_to_zh(t))
-            return ". ".join(result)
+                else:
+                    result.append(t)
+            return ".".join(result)
 
         if text.find("?") != -1:
             text = text.split("?")
             for t in text:
                 if t != "":
                     result.append(Utils.split_en_to_zh(t))
-            return "? ".join(result)
+                else:
+                    result.append(t)
+            return "?".join(result)
 
         if text.find("!") != -1:
             text = text.split("!")
             for t in text:
                 if t != "":
                     result.append(Utils.split_en_to_zh(t))
-            return "! ".join(result)
+                else:
+                    result.append(t)
+            return "!".join(result)
 
         if text.find(";") != -1:
             text = text.split(";")
             for t in text:
                 if t != "":
                     result.append(Utils.split_en_to_zh(t))
-            return "; ".join(result)
+                else:
+                    result.append(t)
+            return ";".join(result)
 
         if text.find(",") != -1:
             text = text.split(",")
             for t in text:
                 if t != "":
                     result.append(Utils.split_en_to_zh(t))
-            return ", ".join(result)
+                else:
+                    result.append(t)
+            return ",".join(result)
+        
+        if text.find(":") != -1:
+            text = text.split(":")
+            for t in text:
+                if t != "":
+                    result.append(Utils.split_en_to_zh(t))
+                else:
+                    result.append(t)
+            return ":".join(result)
+        
+        # 如果是纯数字,不翻译
+        if text.isdigit() or text.replace(".", "").isdigit() or text.replace(" ", "").isdigit() or text.replace("-", "").isdigit():
+            return text
 
         return Utils.en2zh(text)
 
     def to_debug_prompt(p):
         if p is None:
             return ""
-        zh = Utils.en2zh(p)
+        zh = Utils.split_en_to_zh(p)
         p = p.strip()
         return f"""
 原文:
