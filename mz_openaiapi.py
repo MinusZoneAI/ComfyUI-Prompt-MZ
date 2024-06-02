@@ -126,6 +126,11 @@ def query_beautify_prompt_text(args_dict):
             tool_choice={"type": "function",
                          "function": {"name": "beautify_prompt_text"}},
         )
+
+        if type(output) == str:
+            raise Exception(
+                f"返回结果格式异常 ; Return result format exception : {output}")
+
         tool_calls = output.choices[0].message.tool_calls
 
         functions_args = {}
@@ -167,6 +172,10 @@ def query_beautify_prompt_text(args_dict):
                 {"role": "user", "content": question},
             ],
         )
+
+        if type(output) == str:
+            raise Exception(
+                f"返回结果格式异常 ; Return result format exception : {output}")
 
         full_response = output.choices[0].message.content
 
