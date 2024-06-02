@@ -214,10 +214,18 @@ class Utils:
         return translatedText
 
     def zh2en(text):
-        return Utils.translate_text(text, "zh", "en")
+        try:
+            return Utils.translate_text(text, "zh", "en")
+        except Exception as e:
+            print(f"zh2en error: {e}")
+            return text
 
     def en2zh(text):
-        return Utils.translate_text(text, "en", "zh")
+        try:
+            return Utils.translate_text(text, "en", "zh")
+        except Exception as e:
+            print(f"en2zh error: {e}")
+            return text
 
     def prompt_zh_to_en(prompt):
         prompt = prompt.replace("，", ",")
@@ -709,16 +717,17 @@ class Utils:
                 for root, dirs, files in os.walk(find_fullpath):
                     for file in files:
                         if target_sha256 == Utils.file_sha256(os.path.join(root, file)):
-                            Utils.cache_set(f"get_auto_model_fullpath_{model_name}", os.path.join(root, file))
+                            Utils.cache_set(
+                                f"get_auto_model_fullpath_{model_name}", os.path.join(root, file))
                             return os.path.join(root, file)
                         else:
                             Utils.print_log(
                                 f"Model {os.path.join(root, file)} file hash not match, {target_sha256} != {Utils.file_sha256(os.path.join(root, file))}")
 
-        result = Utils.download_model({"url": download_url, "output": file_path})
+        result = Utils.download_model(
+            {"url": download_url, "output": file_path})
         Utils.cache_set(f"get_auto_model_fullpath_{model_name}", result)
         return result
-
 
     def testDownloadSpeed(url):
         try:

@@ -255,7 +255,7 @@ def image_interrogator_captioner(args_dict):
         del onec_args_dict["captioner_config"]
 
         pil_image = Image.open(image_path)
-        onec_args_dict["image"] = pil_image
+        onec_args_dict["image"] = mz_prompt_utils.Utils.pil2tensor(pil_image)
 
         if i < len(pre_images) - 1:
             onec_args_dict["keep_device"] = True

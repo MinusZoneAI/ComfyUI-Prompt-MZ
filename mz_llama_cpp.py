@@ -153,7 +153,7 @@ def freed_gpu_memory(model_file):
         f"llama_cpp_model_and_opt_{model_file}", None)
 
 
-def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
+def llama_cpp_messages(model_file, mmproj_file=None, messages=[], options={}):
     if options is None:
         options = {}
     options = options.copy()
@@ -188,6 +188,20 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
         elif options.get("split_mode", "LLAMA_SPLIT_MODE_LAYER") == "LLAMA_SPLIT_MODE_NONE":
             split_mode_int = llama_cpp.LLAMA_SPLIT_MODE_NONE
 
+        chat_handler = None
+        if mmproj_file is not None:
+            # 显存不释放,暂时全局缓存
+            chat_handler = mz_prompt_utils.Utils.cache_get(
+                f"llama_cpp_messages_mmproj_file_{mmproj_file}"
+            )
+            if chat_handler is None:
+                mz_prompt_utils.Utils.print_log(
+                    f"llama_cpp_messages mmproj_file: {mmproj_file}")
+                from llama_cpp.llama_chat_format import Llava15ChatHandler
+                chat_handler = Llava15ChatHandler(clip_model_path=mmproj_file)
+                mz_prompt_utils.Utils.cache_set(
+                    f"llama_cpp_messages_mmproj_file_{mmproj_file}", chat_handler)
+
         model = Llama(
             model_path=model_file,
             n_gpu_layers=options.get("n_gpu_layers", -1),
@@ -207,6 +221,7 @@ def llama_cpp_messages(model_file, chat_handler=None, messages=[], options={}):
         )
         model_and_opt = {
             "model": model,
+            "chat_handler": chat_handler,
             "options": options,
         }
         mz_prompt_utils.Utils.cache_set(
@@ -363,14 +378,14 @@ def llama_cpp_simple_interrogator(model_file, use_system=True, system=None, ques
     return llama_cpp_messages(model_file, None, messages, options=options)
 
 
-def llava_cpp_messages(model_file, chat_handler, messages, options={}):
+def llava_cpp_messages(model_file, mmproj_file, messages, options={}):
     if options is None:
         options = {}
 
     options = options.copy()
     options["logits_all"] = True
     options["n_ctx"] = max(4096, options.get("n_ctx", 4096))
-    return llama_cpp_messages(model_file, chat_handler, messages, options)
+    return llama_cpp_messages(model_file, mmproj_file, messages, options)
 
 
 def llava_cpp_simple_interrogator(
@@ -389,13 +404,8 @@ def llava_cpp_simple_interrogator(
     content.append({"type": "text", "text": question})
 
     check_llama_cpp_requirements()
-    from llama_cpp.llama_chat_format import Llava15ChatHandler
-    if mmproj_file is not None:
-        mz_prompt_utils.Utils.print_log(
-            f"llava_cpp_simple_interrogator mmproj_file: {mmproj_file}")
-        chat_handler = Llava15ChatHandler(clip_model_path=mmproj_file)
 
-    return llava_cpp_messages(model_file, chat_handler, [
+    return llava_cpp_messages(model_file, mmproj_file, [
         {
             "role": "system",
             "content": system,
