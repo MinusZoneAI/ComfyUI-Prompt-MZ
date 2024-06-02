@@ -177,7 +177,7 @@ llama_cpp_model不设置时，将使用默认模型: Meta-Llama-3-8B-Instruct-Q4
 
 NODE_CLASS_MAPPINGS["MZ_LLamaCPPCLIPTextEncode"] = MZ_LLamaCPPCLIPTextEncode
 NODE_DISPLAY_NAME_MAPPINGS[
-    "MZ_LLamaCPPCLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(llama.cpp通用)"
+    "MZ_LLamaCPPCLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(LLamaCPP Universal)"
 
 
 class MZ_LLamaCPPOptions:
