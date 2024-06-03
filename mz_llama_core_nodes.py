@@ -332,6 +332,8 @@ def image_interrogator_node_encode(args_dict):
             llama_cpp_model = mz_prompt_utils.Utils.get_auto_model_fullpath(
                 "ggml_llava1_5-7b-q4_k_m")
 
+
+        mmproj_model_name = mmproj_model
         if mmproj_model == "auto":
             llama_cpp_model_sha256 = mz_prompt_utils.Utils.file_sha256(
                 llama_cpp_model)
@@ -348,6 +350,7 @@ def image_interrogator_node_encode(args_dict):
                     "llama_cpp_model_sha256: ", llama_cpp_model_sha256)
                 raise Exception(
                     "未能自动找到对应的mmproj文件 ; Failed to automatically find the corresponding mmproj file.")
+            
         mmproj_model = mz_prompt_utils.Utils.get_auto_model_fullpath(
             mmproj_model_name)
 
@@ -357,6 +360,8 @@ def image_interrogator_node_encode(args_dict):
             model_name)
 
         mmproj_model = model_config.get("mmproj_model_name", "auto")
+        
+        mmproj_model_name = mmproj_model
         if mmproj_model == "auto":
             llama_cpp_model_sha256 = mz_prompt_utils.Utils.file_sha256(
                 llama_cpp_model)
@@ -374,10 +379,9 @@ def image_interrogator_node_encode(args_dict):
             if mmproj_model_name is None:
                 raise Exception(
                     "未能自动找到对应的mmproj文件 ; Failed to automatically find the corresponding mmproj file")
-            
-            mmproj_model = mmproj_model_name
+             
         mmproj_model = mz_prompt_utils.Utils.get_auto_model_fullpath(
-                mmproj_model)
+                mmproj_model_name)
 
     else:
         raise Exception("Unknown select_model_type")
