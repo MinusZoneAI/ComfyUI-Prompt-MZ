@@ -335,7 +335,7 @@ def image_interrogator_node_encode(args_dict):
             llama_cpp_model = os.path.join(
                 mz_prompt_utils.Utils.get_gguf_models_path(), llama_cpp_model)
 
-        if mmproj_model == "auto":
+        if mmproj_model.endswith("auto"):
             llama_cpp_model_sha256 = mz_prompt_utils.Utils.file_sha256(
                 llama_cpp_model)
 
@@ -351,12 +351,15 @@ def image_interrogator_node_encode(args_dict):
                     "llama_cpp_model_sha256: ", llama_cpp_model_sha256)
                 raise Exception(
                     "未能自动找到对应的mmproj文件 ; Failed to automatically find the corresponding mmproj file.")
+            else:
+                pass
 
             mmproj_model = mz_prompt_utils.Utils.get_auto_model_fullpath(
                 mmproj_model_name)
         else:
-            mmproj_model = os.path.join(
-                mz_prompt_utils.Utils.get_gguf_models_path(), mmproj_model)
+            # mmproj_model = os.path.join(
+            #     mz_prompt_utils.Utils.get_gguf_models_path(), mmproj_model)
+            pass
 
     elif select_model_type == "DownloaderSelect":
         model_name = model_config.get("model_name")
