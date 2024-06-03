@@ -96,20 +96,13 @@ NODE_DISPLAY_NAME_MAPPINGS[
 class MZ_LLamaCPPModelConfig_DownloaderSelect:
     @classmethod
     def INPUT_TYPES(s):
+        optional_models = Utils.get_model_zoo(tags_filter="llama")
+        model_names = [
+            model["model"] for model in optional_models
+        ]
         return {
             "required": {
-                "model_name": ([
-                    "Meta-Llama-3-8B-Instruct.Q4_K_M",
-                    "Phi-3-mini-4k-instruct-q4",
-                    "Meta-Llama-3-8B-Q4_K_M",
-                    "llama3_8b_instruct_dpo_zh-Q4_K_M",
-                    "llama3-zh.Q4_K_M",
-                    "qwen1_5-14b-chat-q4_k_m",
-                    "qwen1_5-7b-chat-q4_k_m",
-                    "qwen1_5-4b-chat-q4_k_m",
-                    "qwen1_5-1_8b-chat-q4_k_m",
-                    "qwen1_5-0_5b-chat-q4_k_m",
-                ],),
+                "model_name": (model_names,),
             },
             "optional": {
             },
@@ -456,19 +449,20 @@ NODE_DISPLAY_NAME_MAPPINGS[
 class MZ_ImageInterrogatorModelConfig_DownloaderSelect:
     @classmethod
     def INPUT_TYPES(s):
+        optional_models = Utils.get_model_zoo(tags_filter="llava")
+        model_names = [
+            model["model"] for model in optional_models
+        ]
+
+        optional_models = Utils.get_model_zoo(tags_filter="mmproj")
+        mmproj_model_names = [
+            model["model"] for model in optional_models
+        ]
+
         return {
             "required": {
-                "model_name": ([
-                    "ggml_llava1_5-7b-q4_k_m",
-                    "ggml_bakllava-1-q4_k_m",
-                    "llava_v1_6_mistral_7b_q5_k_m",
-                ],),
-                "mmproj_model_name": ([
-                    "auto",
-                    "ggml_llava1_5-7b-mmproj-f16",
-                    "ggml_bakllava-1-mmproj-f16",
-                    "llava_v1_6_mistral_7b_mmproj_f16",
-                ],),
+                "model_name": (model_names,),
+                "mmproj_model_name": (mmproj_model_names,),
             },
             "optional": {
             },

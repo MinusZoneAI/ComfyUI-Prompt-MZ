@@ -7,6 +7,8 @@
 Use llama.cpp to assist in generating some nodes related to prompt words, including beautifying prompt words and image recognition similar to clip-interrogator
 
 ## Recent changes
+* [2024-06-04] 新增了一些预设模型 (Added some preset models)
+* [2024-06-04] 新增通用节点,支持手动选择模型 (Add universal node, support manual selection of models)
 * [2024-05-30] 添加ImageCaptionerConfig节点来支持批量生成提示词 (Add ImageCaptionerConfig node to support batch generation of prompt words)
 * [2024-05-24] 运行后在当前节点显示生成的提示词 (Display the generated prompt words in the current node after running)
 * [2024-05-24] 兼容清华智谱API (Compatible with Zhipu API)

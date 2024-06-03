@@ -1,4 +1,5 @@
 
+import json
 import os
 import shutil
 import subprocess
@@ -724,8 +725,51 @@ class Utils:
                 h.update(b)
         return h.hexdigest()
 
+    def get_cache_by_local(key):
+        try:
+            cache_json_file = os.path.join(
+                Utils.get_models_path(), f"caches.json")
+
+            if not os.path.exists(cache_json_file):
+                return None
+
+            with open(cache_json_file, "r", encoding="utf-8") as f:
+                cache_json = json.load(f)
+                return cache_json.get(key, None)
+        except:
+            return None
+
+    def set_cache_by_local(key, value):
+        try:
+            cache_json_file = os.path.join(
+                Utils.get_models_path(), f"caches.json")
+
+            if not os.path.exists(cache_json_file):
+                cache_json = {}
+            else:
+                with open(cache_json_file, "r", encoding="utf-8") as f:
+                    cache_json = json.load(f)
+
+            cache_json[key] = value
+
+            with open(cache_json_file, "w", encoding="utf-8") as f:
+                json.dump(cache_json, f, indent=4)
+        except:
+            pass
+
     def file_sha256(file_path):
-        return Utils.file_hash(file_path, hashlib.sha256)
+        # 获取文件的更新时间
+        file_stat = os.stat(file_path)
+        file_mtime = file_stat.st_mtime
+        file_size = file_stat.st_size
+        cache_key = f"{file_path}_{file_mtime}_{file_size}"
+        cache_value = Utils.get_cache_by_local(cache_key)
+        if cache_value is not None:
+            return cache_value
+        
+        sha256 = Utils.file_hash(file_path, hashlib.sha256)
+        Utils.set_cache_by_local(cache_key, sha256)
+        return sha256
 
     def get_auto_model_fullpath(model_name):
         fullpath = Utils.cache_get(f"get_auto_model_fullpath_{model_name}")
@@ -738,6 +782,8 @@ class Utils:
         target_sha256 = ""
         file_path = ""
         download_url = ""
+
+        MODEL_ZOO = Utils.get_model_zoo()
         for model in MODEL_ZOO:
             if model["model"] == model_name:
                 find_paths = model["find_path"]
@@ -789,154 +835,23 @@ class Utils:
             print(f"Test download speed failed: {e}")
             return False
 
+    def get_model_zoo(tags_filter=None):
+        source_model_zoo_file = os.path.join(
+            os.path.dirname(__file__), "configs", "model_zoo.json")
+        source_model_zoo_json = []
+        try:
+            with open(source_model_zoo_file, "r", encoding="utf-8") as f:
+                source_model_zoo_json = json.load(f)
+        except:
+            pass
 
-MODEL_ZOO = [
-    {
-        "model": "Meta-Llama-3-8B-Instruct.Q4_K_M",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
-        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-GGUF%2FMeta-Llama-3-8B-Instruct.Q4_K_M.gguf",
-        "SHA256": "647a2b64cbcdbe670432d0502ebb2592b36dd364d51a9ef7a1387b7a4365781f",
-    },
-    {
-        "model": "Meta-Llama-3-8B-Q4_K_M",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/Meta-Llama-3-8B-Q4_K_M.gguf",
-        "url": "https://modelscope.cn/api/v1/models/LLM-Research/Meta-Llama-3-8B-GGUF/repo?Revision=master&FilePath=Meta-Llama-3-8B-Q4_K_M.gguf",
-        "SHA256": "b3413ff367d0c568d1ebb06faa6d1e44c3a7fc2ad8eea40b1685788ce4f90e3e",
-    },
-    {
-        "model": "Phi-3-mini-4k-instruct-q4",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/Phi-3-mini-4k-instruct-q4.gguf",
-        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=Phi-3-mini-4k-instruct-gguf%2FPhi-3-mini-4k-instruct-q4.gguf",
-        "SHA256": "1cd9a9df07350196623f93bf4829cf228959e07ad32f787b8fdd7f5956f5b9de",
-    },
-    {
-        "model": "llama3-zh.Q4_K_M",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/llama3-zh.Q4_K_M.gguf",
-        "url": "https://modelscope.cn/api/v1/models/ModelM/Llama-3-8b-zh-gguf/repo?Revision=master&FilePath=llama3-zh.Q4_K_M.gguf",
-        "SHA256": "1b04ec22e4079af8064a8378d55d2cd79e43eff9faf4bbe8f341f1fd792a53cd",
-    },
-    {
-        "model": "llama3_8b_instruct_dpo_zh-Q4_K_M",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/llama3_8b_instruct_dpo_zh-Q4_K_M.gguf",
-        "url": "https://modelscope.cn/api/v1/models/shareAI/llama-3-8b-Instruct-dpo-chinese-loftq-gguf/repo?Revision=master&FilePath=llama3_8b_instruct_dpo_zh-Q4_K_M.gguf",
-        "SHA256": "5231f5f119e1ef7db058211b8a140b530930a40b9b89c54db8455cc20ae3f699",
-    },
-    {
-        "model": "qwen1_5-14b-chat-q4_k_m",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/qwen1_5-14b-chat-q4_k_m.gguf",
-        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-14B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-14b-chat-q4_k_m.gguf",
-        "SHA256": "46fbff2797c39c2d6aa555db0b0b4fe3f41b712a9b45266e438aa9a5047c0563",
-    },
-    {
-        "model": "qwen1_5-7b-chat-q4_k_m",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/qwen1_5-7b-chat-q4_k_m.gguf",
-        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-7B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-7b-chat-q4_k_m.gguf",
-        "SHA256": "d7f132b1eff9ce35acf8e83ab96d2bc87eaedb68244e467bbc99e9f46a122a4c",
-    },
-    {
-        "model": "qwen1_5-4b-chat-q4_k_m",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/qwen1_5-4b-chat-q4_k_m.gguf",
-        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-4B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-4b-chat-q4_k_m.gguf",
-        "SHA256": "426143ccd3241b9547c2b70c622b4f4ef3436ee07e44991bd69ad84b36cd9b9b",
-    },
-    {
-        "model": "qwen1_5-1_8b-chat-q4_k_m",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/qwen1_5-1_8b-chat-q4_k_m.gguf",
-        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-1.8B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-1_8b-chat-q4_k_m.gguf",
-        "SHA256": "702e983c77883426806a2af75d34ab3e462e1b822f9dc23b49e02280c24b2b18",
-    },
-    {
-        "model": "qwen1_5-0_5b-chat-q4_k_m",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/qwen1_5-0_5b-chat-q4_k_m.gguf",
-        "url": "https://modelscope.cn/api/v1/models/qwen/Qwen1.5-0.5B-Chat-GGUF/repo?Revision=master&FilePath=qwen1_5-0_5b-chat-q4_k_m.gguf",
-        "SHA256": "92916b71d32f5afea48fb7383e3b48c5b1c111f5a59f0b83c764ea1d07fe1a3a",
-    },
-    {
-        "model": "ggml_llava1_5-7b-q4_k_m",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/ggml_llava1_5-7b-q4_k_m.gguf",
-        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_llava-v1.5-7b%2Fggml-model-q4_k.gguf",
-        "SHA256": "7ac9c2f7b8d76cc7f3118cdf0953ebab7a7a9b12bad5dbe237219d2ab61765ea",
-    },
-    {
-        "model": "ggml_llava1_5-7b-mmproj-f16",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/ggml_llava1_5-7b-mmproj-f16.gguf",
-        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_llava-v1.5-7b%2Fmmproj-model-f16.gguf",
-        "SHA256": "b7c8ff0f58fca47d28ba92c4443adf8653f3349282cb8d9e6911f22d9b3814fe",
-    },
-    {
-        "model": "ggml_bakllava-1-q4_k_m",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/ggml_bakllava-1-q4_k_m.gguf",
-        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_bakllava-1%2Fggml-model-q5_k.gguf",
-        "SHA256": "c93de1376be9b6977cc94d252a3d165d6059e07b528de0fa762534d9599b27d6",
-    },
-    {
-        "model": "ggml_bakllava-1-mmproj-f16",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/ggml_bakllava-1-mmproj-f16.gguf",
-        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_bakllava-1%2Fmmproj-model-f16.gguf",
-        "SHA256": "2e467eba710002839e0966d5e329942bb836eabd4e787bc713b07eff1d8ea13b",
-    },
-    {
-        "model": "llava_v1_6_mistral_7b_q5_k_m",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/llava_v1_6_mistral_7b_q5_k_m.gguf",
-        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llava-1.6-mistral-7b-gguf%2Fllava-v1.6-mistral-7b.Q5_K_M.gguf",
-        "SHA256": "b1d37fc65ecb80aa8f1ce185bf4d7605bc3c5cc5bcc77a160c3a1b0377631112",
-    },
-    {
-        "model": "llava_v1_6_mistral_7b_mmproj_f16",
-        "find_path": [
-            "gguf",
-        ],
-        "file_path": "gguf/llava_v1_6_mistral_7b_mmproj_f16.gguf",
-        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llava-1.6-mistral-7b-gguf%2Fmmproj-model-f16.gguf",
-        "SHA256": "00205ee8a0d7a381900cd031e43105f86aa0d8c07bf329851e85c71a26632d16",
-    },
+        # Utils.print_log(f"source_model_zoo_json: {json.dumps(source_model_zoo_json, indent=4)}")
+        if tags_filter is not None:
+            source_model_zoo_json = [
+                m for m in source_model_zoo_json if tags_filter in m["tags"]]
 
-]
+        return source_model_zoo_json
+
 
 modelscope_models_map = {
     "llama3": {

@@ -312,13 +312,6 @@ def image_interrogator_captioner(args_dict):
     return result
 
 
-image_interrogator_auto_mmproj_model = {
-    "7ac9c2f7b8d76cc7f3118cdf0953ebab7a7a9b12bad5dbe237219d2ab61765ea": "ggml_llava1_5-7b-mmproj-f16",
-    "c93de1376be9b6977cc94d252a3d165d6059e07b528de0fa762534d9599b27d6": "ggml_bakllava-1-mmproj-f16",
-    "b1d37fc65ecb80aa8f1ce185bf4d7605bc3c5cc5bcc77a160c3a1b0377631112": "llava_v1_6_mistral_7b_q5_k_m",
-}
-
-
 def image_interrogator_node_encode(args_dict):
     importlib.reload(mz_prompts)
 
@@ -342,15 +335,21 @@ def image_interrogator_node_encode(args_dict):
         if mmproj_model == "auto":
             llama_cpp_model_sha256 = mz_prompt_utils.Utils.file_sha256(
                 llama_cpp_model)
-            mmproj_model_name = image_interrogator_auto_mmproj_model.get(
-                llama_cpp_model_sha256, None)
+
+            mmproj_model_name = mz_prompt_utils.Utils.get_model_zoo(
+                tags_filter=llama_cpp_model_sha256)
+            if len(mmproj_model_name) == 0:
+                mmproj_model_name = None
+            else:
+                mmproj_model_name = mmproj_model_name[0].get("model", None)
+
             if mmproj_model_name is None:
                 mz_prompt_utils.Utils.print_log(
                     "llama_cpp_model_sha256: ", llama_cpp_model_sha256)
                 raise Exception(
                     "未能自动找到对应的mmproj文件 ; Failed to automatically find the corresponding mmproj file.")
-            mmproj_model = mz_prompt_utils.Utils.get_auto_model_fullpath(
-                mmproj_model_name)
+        mmproj_model = mz_prompt_utils.Utils.get_auto_model_fullpath(
+            mmproj_model_name)
 
     elif select_model_type == "DownloaderSelect":
         model_name = model_config.get("model_name")
@@ -365,13 +364,21 @@ def image_interrogator_node_encode(args_dict):
             mz_prompt_utils.Utils.print_log(
                 "llama_cpp_model_sha256: ", llama_cpp_model_sha256)
 
-            mmproj_model_name = image_interrogator_auto_mmproj_model.get(
-                llama_cpp_model_sha256, None)
+            mmproj_model_name = mz_prompt_utils.Utils.get_model_zoo(
+                tags_filter=llama_cpp_model_sha256)
+            if len(mmproj_model_name) == 0:
+                mmproj_model_name = None
+            else:
+                mmproj_model_name = mmproj_model_name[0].get("model", None)
+
             if mmproj_model_name is None:
                 raise Exception(
                     "未能自动找到对应的mmproj文件 ; Failed to automatically find the corresponding mmproj file")
-            mmproj_model = mz_prompt_utils.Utils.get_auto_model_fullpath(
-                mmproj_model_name)
+            
+            mmproj_model = mmproj_model_name
+        mmproj_model = mz_prompt_utils.Utils.get_auto_model_fullpath(
+                mmproj_model)
+
     else:
         raise Exception("Unknown select_model_type")
 
@@ -394,6 +401,7 @@ def image_interrogator_node_encode(args_dict):
         system_prompt = customize_instruct.get("system", "")
         question = customize_instruct.get("instruct", "")
 
+    mz_prompt_utils.Utils.print_log(f"mmproj_model: {mmproj_model}")
     response = mz_llama_cpp.llava_cpp_simple_interrogator(
         model_file=llama_cpp_model,
         mmproj_file=mmproj_model,
