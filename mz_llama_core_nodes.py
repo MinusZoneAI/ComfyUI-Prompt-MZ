@@ -65,7 +65,7 @@ def llama_cpp_node_encode(args_dict):
         model_file = model_config.get("model_path", "auto")
         if model_file == "auto":
             model_file = mz_prompt_utils.Utils.get_auto_model_fullpath(
-                "Meta-Llama-3-8B-Instruct-Q4_K_M")
+                "Meta-Llama-3-8B-Instruct.Q4_K_M")
     elif select_model_type == "DownloaderSelect":
         model_name = model_config.get("model_name", "")
         model_file = mz_prompt_utils.Utils.get_auto_model_fullpath(

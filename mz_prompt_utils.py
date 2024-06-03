@@ -657,7 +657,7 @@ class Utils:
                 else:
                     result.append(t)
             return ",".join(result)
-        
+
         if text.find(":") != -1:
             text = text.split(":")
             for t in text:
@@ -666,7 +666,7 @@ class Utils:
                 else:
                     result.append(t)
             return ":".join(result)
-        
+
         # 如果是纯数字,不翻译
         if text.isdigit() or text.replace(".", "").isdigit() or text.replace(" ", "").isdigit() or text.replace("-", "").isdigit():
             return text
@@ -792,13 +792,13 @@ class Utils:
 
 MODEL_ZOO = [
     {
-        "model": "Meta-Llama-3-8B-Instruct-Q4_K_M",
+        "model": "Meta-Llama-3-8B-Instruct.Q4_K_M",
         "find_path": [
             "gguf",
         ],
-        "file_path": "gguf/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
-        "url": "https://modelscope.cn/api/v1/models/LLM-Research/Meta-Llama-3-8B-Instruct-GGUF/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
-        "SHA256": "57b26bac2df51111affec600077708de06133b8f49e697723672657c7cbe3b9c",
+        "file_path": "gguf/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
+        "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-GGUF%2FMeta-Llama-3-8B-Instruct.Q4_K_M.gguf",
+        "SHA256": "647a2b64cbcdbe670432d0502ebb2592b36dd364d51a9ef7a1387b7a4365781f",
     },
     {
         "model": "Meta-Llama-3-8B-Q4_K_M",
@@ -941,14 +941,9 @@ MODEL_ZOO = [
 modelscope_models_map = {
     "llama3": {
         "Meta-Llama-3-8B-Instruct.Q4_K_M.gguf": {
-            "url": "https://modelscope.cn/api/v1/models/LLM-Research/Meta-Llama-3-8B-Instruct-GGUF/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
-            "output": "modelscope_models/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct-Q4_K_M.gguf",
-            "SHA256": "57b26bac2df51111affec600077708de06133b8f49e697723672657c7cbe3b9c",
-        },
-        "Meta-Llama-3-8B-Instruct.Q5_K_M.gguf": {
-            "url": "https://modelscope.cn/api/v1/models/LLM-Research/Meta-Llama-3-8B-Instruct-GGUF/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-Q5_K_M.gguf",
-            "output": "modelscope_models/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct-Q5_K_M.gguf",
-            "SHA256": "1ea28c7c5f2a1ada991c40940a59bd42668939feeafb125d0764c38ae815b2a3",
+            "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=Meta-Llama-3-8B-Instruct-GGUF%2FMeta-Llama-3-8B-Instruct.Q4_K_M.gguf",
+            "output": "modelscope_models/Meta-Llama-3-8B-Instruct-GGUF/Meta-Llama-3-8B-Instruct.Q4_K_M.gguf",
+            "SHA256": "647a2b64cbcdbe670432d0502ebb2592b36dd364d51a9ef7a1387b7a4365781f",
         },
     },
     "llava": {

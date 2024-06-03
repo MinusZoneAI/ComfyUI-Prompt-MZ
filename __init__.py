@@ -99,7 +99,7 @@ class MZ_LLamaCPPModelConfig_DownloaderSelect:
         return {
             "required": {
                 "model_name": ([
-                    "Meta-Llama-3-8B-Instruct-Q4_K_M",
+                    "Meta-Llama-3-8B-Instruct.Q4_K_M",
                     "Phi-3-mini-4k-instruct-q4",
                     "Meta-Llama-3-8B-Q4_K_M",
                     "llama3_8b_instruct_dpo_zh-Q4_K_M",
@@ -164,7 +164,7 @@ class MZ_LLamaCPPCLIPTextEncode:
     CATEGORY = CATEGORY_NAME
 
     DESCRIPTION = """
-llama_cpp_model不设置时，将使用默认模型: Meta-Llama-3-8B-Instruct-Q4_K_M.gguf
+llama_cpp_model不设置时，将使用默认模型: Meta-Llama-3-8B-Instruct.Q4_K_M.gguf
 """
 
     def encode(self, **kwargs):
