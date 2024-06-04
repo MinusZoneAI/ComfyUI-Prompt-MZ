@@ -1,3 +1,4 @@
+import copy
 import importlib
 import json
 import os
@@ -109,8 +110,19 @@ def check_llama_cpp_requirements():
             print("llama_cpp installed successfully. (llama_cpp安装成功)")
 
 
+def get_llama_cpp_chat_handlers():
+    check_llama_cpp_requirements()
+    from llama_cpp import llama_chat_format
+    chat_handlers = llama_chat_format.LlamaChatCompletionHandlerRegistry()._chat_handlers
+    chat_handlers = list(chat_handlers.keys())
+
+    return chat_handlers
+
+
 def LlamaCppOptions():
+    # chat_handlers = ["auto"] + get_llama_cpp_chat_handlers()
     return {
+        # "chat_format": chat_handlers,
         "n_ctx": 2048,
         "n_batch": 2048,
         "n_threads": 0,
@@ -169,6 +181,9 @@ def llama_cpp_messages(model_file, mmproj_file=None, messages=[], options={}):
         f"llama_cpp_model_and_opt_{model_file}")
 
     is_opts_changed = False
+
+    mz_prompt_utils.Utils.print_log(
+        f"llama_cpp_messages chat_format: {options.get('chat_format', None)}")
 
     if model_and_opt is not None:
         for opt in init_opts:
@@ -259,6 +274,25 @@ def llama_cpp_messages(model_file, mmproj_file=None, messages=[], options={}):
         mirostat_mode = 1
     elif options.get("mirostat_mode", "none") == "mirostat_v2":
         mirostat_mode = 2
+
+    try:
+        debuf_messages = copy.deepcopy(messages)
+        for dindex in range(len(debuf_messages)):
+            if debuf_messages[dindex].get("role") == "user":
+                debuf_messages_content = debuf_messages[dindex].get(
+                    "content", [])
+                if type(debuf_messages_content) != list:
+                    continue
+                for ccindex in range(len(debuf_messages_content)):
+                    if debuf_messages_content[ccindex].get("type") == "image_url":
+                        debuf_messages[dindex]["content"][ccindex]["image_url"] = debuf_messages[
+                            dindex]["content"][ccindex]["image_url"] = None
+
+        mz_prompt_utils.Utils.print_log(
+            f"LLAMA_CPP messages: {json.dumps(debuf_messages, indent=4, ensure_ascii=False)}")
+    except Exception as e:
+        mz_prompt_utils.Utils.print_log(
+            f"LLAMA_CPP messages: {messages}")
     output = model.create_chat_completion(
         messages=messages,
         response_format=response_format,
@@ -276,6 +310,8 @@ def llama_cpp_messages(model_file, mmproj_file=None, messages=[], options={}):
         mirostat_mode=mirostat_mode,
         mirostat_tau=options.get("mirostat_tau", 5.0),
         mirostat_eta=options.get("mirostat_eta", 0.1),
+        tools=options.get("tools", None),
+        tool_choice=options.get("tool_choice", None),
     )
     mz_prompt_utils.Utils.print_log(f"LLAMA_CPP: \n{output}")
     choices = output.get("choices", [])
@@ -330,7 +366,9 @@ def llama_cpp_simple_interrogator_to_json(model_file, use_system=True, system=No
     }
 
     options["response_format"] = response_format
-    options["chat_format"] = "chatml"
+
+    # if options.get("chat_format", None) is None:
+    #     options["chat_format"] = "llama-2"
 
     result = llama_cpp_messages(model_file, None, messages, options=options)
     result = result.replace("\n", " ")
@@ -385,6 +423,9 @@ def llava_cpp_messages(model_file, mmproj_file, messages, options={}):
     options = options.copy()
     options["logits_all"] = True
     options["n_ctx"] = max(4096, options.get("n_ctx", 4096))
+
+    # if options.get("chat_format", None) is None:
+    #     options["chat_format"] = "llama-2"
     return llama_cpp_messages(model_file, mmproj_file, messages, options)
 
 

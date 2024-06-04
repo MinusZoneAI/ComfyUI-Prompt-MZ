@@ -35,6 +35,7 @@ ZH_Replace_Map = {
     "ModelConfigManualSelect": "手动模型选择器",
     "ModelConfigDownloaderSelect": "预设模型下载器",
     "captioner_config": "打标器配置",
+    "post_processing": "后处理",
 }
 
 

@@ -172,41 +172,81 @@ class Utils:
         os.makedirs(models_path, exist_ok=True)
         return models_path
 
-    def translate_text(text, from_code, to_code):
+    def get_translate_object(from_code, to_code):
         try:
-            import argostranslate
-            from argostranslate import translate
-        except ImportError:
-            subprocess.run([
-                sys.executable, "-m",
-                "pip", "install", "argostranslate"], check=True)
-            import argostranslate
-            from argostranslate import translate
+            is_disabel_argostranslate = Utils.cache_get(
+                "is_disabel_argostranslate")
 
-        try:
-            translation = translate.get_translation_from_codes(
-                from_code, to_code)
-            if translation is None:
-                raise Exception("Translation not found")
+            if is_disabel_argostranslate is not None:
+                return None
 
+            try:
+                import argostranslate
+                from argostranslate import translate, package
+            except ImportError:
+                subprocess.run([
+                    sys.executable, "-m",
+                    "pip", "install", "argostranslate"], check=True)
+
+                try:
+                    import argostranslate
+                    from argostranslate import translate, package
+                except ImportError:
+                    Utils.cache_set("is_disabel_argostranslate", True)
+                    print(
+                        "argostranslate not found and install failed , will disable it")
+                    return None
+
+            packages = package.get_installed_packages()
+            installed_packages = {}
+            for p in packages:
+                installed_packages[f"{p.from_code}_{p.to_code}"] = p
+
+            argosmodel_dir = os.path.join(
+                Utils.get_models_path(), "argosmodel")
+            if not os.path.exists(argosmodel_dir):
+                os.makedirs(argosmodel_dir)
+
+            model_name = None
+            if from_code == "zh" and to_code == "en":
+                model_name = "zh_en"
+            elif from_code == "en" and to_code == "zh":
+                model_name = "en_zh"
+            else:
+                return None
+
+            if Utils.cache_get(f"argostranslate_{model_name}") is not None:
+                return Utils.cache_get(f"argostranslate_{model_name}")
+
+            if installed_packages.get(model_name, None) is None:
+                if not os.path.exists(os.path.join(argosmodel_dir, f"translate-{model_name}-1_9.argosmodel")):
+                    argosmodel_file = Utils.download_file(
+                        url=f"https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=argosmodel%2Ftranslate-{model_name}-1_9.argosmodel",
+                        filepath=os.path.join(
+                            argosmodel_dir, f"translate-{model_name}-1_9.argosmodel"),
+                    )
+                else:
+                    argosmodel_file = os.path.join(
+                        argosmodel_dir, f"translate-{model_name}-1_9.argosmodel")
+                package.install_from_path(argosmodel_file)
+
+            translate_object = translate.get_translation_from_codes(
+                from_code=from_code, to_code=to_code)
+
+            Utils.cache_set(f"argostranslate_{model_name}", translate_object)
+
+            return translate_object
         except Exception as e:
-            print(e)
-            argostranslate.package.update_package_index()
-            available_packages = argostranslate.package.get_available_packages()
-            package_to_install = next(
-                filter(
-                    lambda x: (x.from_code == from_code and x.to_code ==
-                               to_code), available_packages,
-                )
-            )
-            download_path = package_to_install.download()
-            print("package_to_install.download():", download_path)
-            argostranslate.package.install_from_path(download_path)
+            Utils.cache_set("is_disabel_argostranslate", True)
+            print(
+                "argostranslate not found and install failed , will disable it")
+            print(f"get_translate_object error: {e}")
+            return None
 
-            translation = translate.get_translation_from_codes(
-                from_code, to_code)
-            if translation is None:
-                return text
+    def translate_text(text, from_code, to_code):
+        translation = Utils.get_translate_object(from_code, to_code)
+        if translation is None:
+            return text
 
         # Translate
         translatedText = translation.translate(
@@ -677,6 +717,9 @@ class Utils:
     def to_debug_prompt(p):
         if p is None:
             return ""
+        zh = Utils.en2zh(p)
+        if p == zh:
+            return p
         zh = Utils.split_en_to_zh(p)
         p = p.strip()
         return f"""
@@ -766,7 +809,7 @@ class Utils:
         cache_value = Utils.get_cache_by_local(cache_key)
         if cache_value is not None:
             return cache_value
-        
+
         sha256 = Utils.file_hash(file_path, hashlib.sha256)
         Utils.set_cache_by_local(cache_key, sha256)
         return sha256

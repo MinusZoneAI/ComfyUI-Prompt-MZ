@@ -60,9 +60,12 @@ class MZ_LLamaCPPModelConfig_ManualSelect:
     @classmethod
     def INPUT_TYPES(s):
         gguf_files = Utils.get_gguf_files()
+
+        chat_format = mz_llama_cpp.get_llama_cpp_chat_handlers()
         return {
             "required": {
                 "llama_cpp_model": (gguf_files,),
+                "chat_format": (["auto"] + chat_format, {"default": "auto"}),
             },
             "optional": {
             },
@@ -82,9 +85,13 @@ class MZ_LLamaCPPModelConfig_ManualSelect:
             llama_cpp_model = os.path.join(
                 Utils.get_gguf_models_path(), llama_cpp_model)
 
+        chat_format = kwargs.get("chat_format", "auto")
+        if chat_format == "auto":
+            chat_format = None
         return ({
             "type": "ManualSelect",
             "model_path": llama_cpp_model,
+            "chat_format": chat_format,
         },)
 
 
@@ -100,9 +107,11 @@ class MZ_LLamaCPPModelConfig_DownloaderSelect:
         model_names = [
             model["model"] for model in optional_models
         ]
+        chat_format = mz_llama_cpp.get_llama_cpp_chat_handlers()
         return {
             "required": {
                 "model_name": (model_names,),
+                "chat_format": (["auto"] + chat_format, {"default": "auto"}),
             },
             "optional": {
             },
@@ -118,9 +127,13 @@ class MZ_LLamaCPPModelConfig_DownloaderSelect:
         kwargs = kwargs.copy()
 
         model_name = kwargs.get("model_name", "")
+        chat_format = kwargs.get("chat_format", "auto")
+        if chat_format == "auto":
+            chat_format = None
         return ({
             "type": "DownloaderSelect",
             "model_name": model_name,
+            "chat_format": chat_format,
         },)
 
 
@@ -211,6 +224,9 @@ class MZ_LLamaCPPOptions:
         opt = {}
         for key in kwargs:
             opt[key] = kwargs[key]
+
+        # if opt.get("chat_format", None) == "auto":
+        #     opt["chat_format"] = None
         return (opt,)
 
 
@@ -370,6 +386,7 @@ class MZ_ImageInterrogatorCLIPTextEncode:
         return {
             "required": {
                 "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
+                "post_processing": ([False, True], {"default": True}),
                 "keep_device": ([False, True], {"default": False}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             },
@@ -406,10 +423,12 @@ class MZ_ImageInterrogatorModelConfig_ManualSelect:
     @classmethod
     def INPUT_TYPES(s):
         gguf_files = Utils.get_gguf_files()
+        chat_format = mz_llama_cpp.get_llama_cpp_chat_handlers()
         return {
             "required": {
                 "llama_cpp_model": (gguf_files,),
                 "mmproj_model": (["auto"] + gguf_files,),
+                "chat_format": (["auto"] + chat_format, {"default": "auto"}),
             },
             "optional": {
             },
@@ -434,10 +453,14 @@ class MZ_ImageInterrogatorModelConfig_ManualSelect:
             mmproj_model = os.path.join(
                 Utils.get_gguf_models_path(), mmproj_model)
 
+        chat_format = kwargs.get("chat_format", "auto")
+        if chat_format == "auto":
+            chat_format = None
         return ({
             "type": "ManualSelect",
             "model_path": llama_cpp_model,
             "mmproj_model": mmproj_model,
+            "chat_format": chat_format,
         },)
 
 
@@ -459,10 +482,12 @@ class MZ_ImageInterrogatorModelConfig_DownloaderSelect:
             model["model"] for model in optional_models
         ]
 
+        chat_format = mz_llama_cpp.get_llama_cpp_chat_handlers()
         return {
             "required": {
                 "model_name": (model_names,),
-                "mmproj_model_name": (mmproj_model_names,),
+                "mmproj_model_name": (["auto"] + mmproj_model_names,),
+                "chat_format": (["auto"] + chat_format, {"default": "auto"}),
             },
             "optional": {
             },
@@ -478,10 +503,14 @@ class MZ_ImageInterrogatorModelConfig_DownloaderSelect:
         kwargs = kwargs.copy()
         model_name = kwargs.get("model_name")
         mmproj_model_name = kwargs.get("mmproj_model_name", "auto")
+        chat_format = kwargs.get("chat_format", "auto")
+        if chat_format == "auto":
+            chat_format = None
         return ({
             "type": "DownloaderSelect",
             "model_name": model_name,
             "mmproj_model_name": mmproj_model_name,
+            "chat_format": chat_format,
         },)
 
 

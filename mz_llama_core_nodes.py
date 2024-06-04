@@ -56,9 +56,12 @@ def get_style_presets():
 def llama_cpp_node_encode(args_dict):
     importlib.reload(mz_prompts)
     importlib.reload(mz_llama_cpp)
+    # importlib.reload(mz_prompt_utils)
 
     model_config = args_dict.get("llama_cpp_model", {})
     mz_prompt_utils.Utils.print_log(f"model_config: {model_config}")
+
+    chat_format = model_config.get("chat_format", None)
 
     select_model_type = model_config.get("type", "ManualSelect")
     if select_model_type == "ManualSelect":
@@ -66,6 +69,10 @@ def llama_cpp_node_encode(args_dict):
         if model_file == "auto":
             model_file = mz_prompt_utils.Utils.get_auto_model_fullpath(
                 "Meta-Llama-3-8B-Instruct.Q4_K_M")
+
+            if "llama-3" in mz_llama_cpp.get_llama_cpp_chat_handlers():
+                chat_format = "llama-3"
+
     elif select_model_type == "DownloaderSelect":
         model_name = model_config.get("model_name", "")
         model_file = mz_prompt_utils.Utils.get_auto_model_fullpath(
@@ -81,6 +88,7 @@ def llama_cpp_node_encode(args_dict):
     keep_device = args_dict.get("keep_device", False)
     seed = args_dict.get("seed", -1)
     options["seed"] = seed
+    options["chat_format"] = chat_format
 
     customize_instruct = args_dict.get("customize_instruct", None)
     mz_prompt_utils.Utils.print_log(
@@ -136,8 +144,19 @@ def llama_cpp_node_encode(args_dict):
                 schema=schema,
                 options=options,
             )
+            try:
+                response_json = json.loads(response_text)
+            except Exception as e:
+                from . import half_json
+                print("json.loads failed, try fix response_text: ", response_text)
+                json_fixer = half_json.JSONFixer()
+                fix_resp = json_fixer.fix(response_text)
+                if fix_resp.success:
+                    print("fix success, use fixed response_text: ", fix_resp.line)
+                    response_json = json.loads(fix_resp.line)
+                else:
+                    raise e
 
-            response_json = json.loads(response_text)
             mz_prompt_utils.Utils.print_log(
                 f"response_json: {json.dumps(response_json, indent=2)}")
 
@@ -322,6 +341,8 @@ def image_interrogator_node_encode(args_dict):
             "图片批量反推任务已完成 ; Image batch reverse push task completed")
 
     model_config = args_dict.get("image_interrogator_model", {})
+
+    chat_format = model_config.get("chat_format", None)
     llama_cpp_model = model_config.get("llama_cpp_model", "auto")
     mmproj_model = model_config.get("mmproj_model", "auto")
 
@@ -401,13 +422,20 @@ def image_interrogator_node_encode(args_dict):
     seed = args_dict.get("seed", -1)
     options = args_dict.get("llama_cpp_options", {})
     options["seed"] = seed
+    options["chat_format"] = chat_format
 
     image = mz_prompt_utils.Utils.resize_max(image, resolution, resolution)
 
     customize_instruct = args_dict.get("customize_instruct", None)
     if customize_instruct is None:
-        system_prompt = mz_prompts.M_ImageCaptioner_System
-        question = mz_prompts.M_ImageCaptioner_Prompt
+        # system_prompt = mz_prompts.GPT4VImageCaptioner_System
+        # question = mz_prompts.GPT4VImageCaptioner_Prompt
+
+        # system_prompt = mz_prompts.M_ImageCaptioner2_System
+        # question = mz_prompts.M_ImageCaptioner2_Prompt
+
+        system_prompt = "You are an assistant who perfectly describes images."
+        question = "Describe this image in detail please."
     else:
         system_prompt = customize_instruct.get("system", "")
         question = customize_instruct.get("instruct", "")
@@ -421,13 +449,116 @@ def image_interrogator_node_encode(args_dict):
         system=system_prompt,
         question=question,
     )
-    if response is not None:
-        response = response.strip()
-    if customize_instruct is None:
-        # 去除开头的In the image,
-        start_text = "In the image, "
-        if response.startswith(start_text):
-            response = response[len(start_text):]
+    response = response.strip()
+    if response is not None and response != "":
+
+        if args_dict.get("post_processing", False):
+
+            # 双引号换成空格
+            response = response.replace("\"", " ")
+            # 中括号换成空格
+            response = response.replace("[", " ")
+            response = response.replace("]", " ")
+
+            # 括号换成空格
+            response = response.replace("(", " ")
+            response = response.replace(")", " ")
+
+            # 去除多余空格
+            while response.find("  ") != -1:
+                response = response.replace("  ", " ")
+
+            # 从第一个为英文字母的地方开始截取
+            for i in range(len(response)):
+                if response[i].isalpha():
+                    response = response[i:]
+                    break
+
+            response = response.strip()
+            schema = get_schema_obj(
+                keys_type={
+                    "short_describes": get_schema_base_type("string"),
+                    "subject_tags": get_schema_array("string"),
+                    "action_tags": get_schema_array("string"),
+                    "light_tags": get_schema_array("string"),
+                    "scene_tags": get_schema_array("string"),
+                    "mood_tags": get_schema_array("string"),
+                    "style_tags": get_schema_array("string"),
+                    "object_tags": get_schema_array("string"),
+                },
+                required=[
+                    "short_describes",
+                    "subject_tags",
+                    "action_tags",
+                    "lights_tags",
+                    "scenes_tags",
+                    "moods_tags",
+                    "styles_tags",
+                    "objects_tags",
+                ]
+            )
+            response_json_str = mz_llama_cpp.llama_cpp_simple_interrogator_to_json(
+                model_file=llama_cpp_model,
+                system=mz_prompts.ImageCaptionerPostProcessing_System,
+                question=f"Content: {response}",
+                schema=schema,
+                options=options,
+            )
+
+            try:
+                response_json = json.loads(response_json_str)
+            except Exception as e:
+                from . import half_json
+                print("json.loads failed, try fix response_json_str: ",
+                      response_json_str)
+                json_fixer = half_json.JSONFixer()
+                fix_resp = json_fixer.fix(response_json_str)
+                if fix_resp.success:
+                    print("fix success, use fixed response_json_str: ",
+                          fix_resp.line)
+                    response_json = json.loads(fix_resp.line)
+                else:
+                    raise e
+
+            responses = []
+
+            def pure_words(text: str) -> bool:
+                number_of_spaces = text.count(" ")
+                if number_of_spaces > 2:
+                    return False
+                for c in text:
+                    if not c.isalpha() and c != "-" and c != "_" and c != " ":
+                        return False
+
+                return True
+
+            for key, value in response_json.items():
+                if type(value) == list:
+
+                    # 去除开头.和空格
+                    value = [v.strip().lstrip(".") for v in value]
+                    # 去除空字符串
+                    value = [v for v in value if v != ""]
+
+                    # 去除带有空格和标点符号的字符串
+                    value = [
+                        v for v in value if pure_words(v)]
+
+                    # 空格换成下划线
+                    value = [v.replace(" ", "_") for v in value]
+
+                    # 首字母小写
+                    value = [v.lower() for v in value]
+
+                    if len(value) > 0:
+                        responses.append(f"{', '.join(value)}")
+
+            description = response_json.get("short_describes", "")
+            if description != "":
+                responses.append(f"{description}")
+
+            # 对response进行去重
+            response = ", ".join(responses)
 
     if keep_device is False:
         mz_llama_cpp.freed_gpu_memory(model_file=llama_cpp_model)

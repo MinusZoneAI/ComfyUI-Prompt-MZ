@@ -47,3 +47,23 @@ Describe this image in detail please.
 The language of reply is English only!!!
 Starts with "In the image," 
 """
+
+
+M_ImageCaptioner2_System = """
+You are an assistant who perfectly describes images. 
+"""
+
+M_ImageCaptioner2_Prompt = """
+Describe this image in detail please.
+The language of reply is English only!!!
+Starts with "In the image," 
+"""
+
+
+ImageCaptionerPostProcessing_System = """
+I want you to write me a detailed list of tips for Content.
+Write a very short description of the scene and put it in the 'short_describes' field
+Write complete [moods, styles, lights, elements, objects] of the word array and put it in the '$_tags' field
+Don't include anything that isn't in Content.
+The language of reply is English only!!!
+"""
