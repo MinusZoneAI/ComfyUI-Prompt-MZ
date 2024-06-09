@@ -8,6 +8,22 @@
     "SHA256": "647a2b64cbcdbe670432d0502ebb2592b36dd364d51a9ef7a1387b7a4365781f"
   },
   {
+    "model": "qwen2-7b-instruct-q5_k_m",
+    "tags": ["llama"],
+    "find_path": ["gguf"],
+    "file_path": "gguf/qwen2-7b-instruct-q5_k_m.gguf",
+    "url": "https://www.modelscope.cn/api/v1/models/qwen/Qwen2-7B-Instruct-GGUF/repo?Revision=master&FilePath=qwen2-7b-instruct-q5_k_m.gguf",
+    "SHA256": "258dd2fa1bdf98b85327774e1fd36e2268c2a4b68eb9021d71106449ee4ba9d5"
+  },
+  {
+    "model": "qwen2-0_5b-instruct-q5_k_m",
+    "tags": ["llama"],
+    "find_path": ["gguf"],
+    "file_path": "gguf/qwen2-0_5b-instruct-q5_k_m.gguf",
+    "url": "https://www.modelscope.cn/api/v1/models/qwen/Qwen2-0.5B-Instruct-GGUF/repo?Revision=master&FilePath=qwen2-0_5b-instruct-q5_k_m.gguf",
+    "SHA256": "16654d862b4b19f4f92ba14e11f056d0220400f59ee74e7a204cf0bf17e64d32"
+  },
+  {
     "model": "omost-llama-3-8b-Q4_K_M",
     "tags": ["llama"],
     "find_path": ["gguf"],
