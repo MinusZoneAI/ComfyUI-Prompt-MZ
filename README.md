@@ -7,6 +7,7 @@
 Use llama.cpp to assist in generating some nodes related to prompt words, including beautifying prompt words and image recognition similar to clip-interrogator
 
 ## Recent changes 
+* [2024-06-05] 新增千问2.0预设模型 (Added Qianwen 2.0 preset model)
 * [2024-06-05] 可选chat_format,图片反推后处理 (Optional chat_format, post-processing after image interrogation)
 * [2024-06-04] 新增了一些预设模型 (Added some preset models)
 * [2024-06-04] 新增通用节点,支持手动选择模型 (Add universal node, support manual selection of models)
