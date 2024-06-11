@@ -8,6 +8,14 @@
     "SHA256": "647a2b64cbcdbe670432d0502ebb2592b36dd364d51a9ef7a1387b7a4365781f"
   },
   {
+    "model": "llama3_if_ai_sdpromptmkr_Q4_K_M",
+    "tags": ["llama"],
+    "find_path": ["gguf"],
+    "file_path": "gguf/llama3_if_ai_sdpromptmkr_Q4_K_M.gguf",
+    "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llama3_if_ai_sdpromptmkr_gguf%2Fllama3_if_ai_sdpromptmkr_Q4_K_M.gguf",
+    "SHA256": "8c307d788852a28a00491c005155e030bc1ce76d96327035cecf1df789bb3a0a"
+  },
+  {
     "model": "qwen2-7b-instruct-q5_k_m",
     "tags": ["llama"],
     "find_path": ["gguf"],
