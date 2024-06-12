@@ -147,10 +147,14 @@ class Utils:
         return [[cond, {"pooled_output": pooled}]]
 
     def a1111_clip_text_encode(clip, text):
-        from . import ADV_CLIP_emb_encode
-        cond, pooled = ADV_CLIP_emb_encode.advanced_encode(
-            clip, text, "none", "A1111", w_max=1.0, apply_to_pooled=False)
-        return [[cond, {"pooled_output": pooled}]]
+        try:
+            from . import ADV_CLIP_emb_encode
+            cond, pooled = ADV_CLIP_emb_encode.advanced_encode(
+                clip, text, "none", "A1111", w_max=1.0, apply_to_pooled=False)
+            return [[cond, {"pooled_output": pooled}]]
+        except Exception as e:
+            import nodes
+            return nodes.CLIPTextEncode().encode(clip, text)[0]
 
     def cache_get(key):
         return CACHE_POOL.get(key, None)
