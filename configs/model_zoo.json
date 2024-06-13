@@ -192,7 +192,7 @@
     ],
     "find_path": ["gguf"],
     "file_path": "gguf/ggml_llava1_5-7b-mmproj-f16.gguf",
-    "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_llava-v1.5-7b%2Fggml_llava1_5-7b-mmproj-f16.gguf",
+    "url": "https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=ggml_llava-v1.5-7b%2Fmmproj-model-f16.gguf",
     "SHA256": "b7c8ff0f58fca47d28ba92c4443adf8653f3349282cb8d9e6911f22d9b3814fe"
   },
   {
