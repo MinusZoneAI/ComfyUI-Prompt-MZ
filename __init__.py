@@ -21,7 +21,7 @@ CATEGORY_NAME = f"{AUTHOR_NAME} - Prompt"
 import importlib
 
 from . import mz_prompt_webserver
-mz_prompt_webserver.start_server()
+# mz_prompt_webserver.start_server()
 
 NODE_CLASS_MAPPINGS = {
 }
