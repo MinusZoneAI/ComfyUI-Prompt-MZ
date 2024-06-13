@@ -47,21 +47,21 @@ async function waitMessage() {
     console.log("Connection error", event);
   };
 
-  for (;;) {
-    await sleep(1000);
-    try {
-      if (websocket.readyState !== WebSocket.OPEN) {
-        return;
-      }
-      websocket.send(
-        JSON.stringify({
-          type: "ping",
-        })
-      );
-    } catch (error) {
-      return;
-    }
-  }
+  // for (;;) {
+  //   await sleep(1000);
+  //   try {
+  //     if (websocket.readyState !== WebSocket.OPEN) {
+  //       return;
+  //     }
+  //     websocket.send(
+  //       JSON.stringify({
+  //         type: "ping",
+  //       })
+  //     );
+  //   } catch (error) {
+  //     return;
+  //   }
+  // }
 }
 
 /**
