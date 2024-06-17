@@ -337,8 +337,9 @@ def image_interrogator_node_encode(args_dict):
     captioner_config = args_dict.get("captioner_config", None)
     if captioner_config is not None:
         image_interrogator_captioner(args_dict)
-        raise Exception(
-            "图片批量反推任务已完成 ; Image batch reverse push task completed")
+        # raise Exception(
+        #     "图片批量反推任务已完成 ; Image batch reverse push task completed")
+        return {"ui": {"string": ["图片批量反推任务已完成 ; Image batch reverse push task completed",]}, "result": ("", None)}
 
     model_config = args_dict.get("image_interrogator_model", {})
 
