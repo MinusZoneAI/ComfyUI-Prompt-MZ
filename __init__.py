@@ -56,8 +56,89 @@ def getCommonCLIPTextEncodeInput():
     return CommonCLIPTextEncodeInput
 
 
-class MZ_LLamaCPPModelConfig_ManualSelect:
+class MZ_OllamaModelConfig_ManualSelect:
     @classmethod
+    def INPUT_TYPES(s):
+        search_dirs = [
+            os.path.join(os.path.expanduser('~'), ".ollama", "models"),
+            os.path.join(os.environ.get("APPDATA", ""), ".ollama", "models"),
+        ]
+
+        ollama_models_dir = None
+        for dir in search_dirs:
+            if os.path.exists(dir):
+                ollama_models_dir = dir
+                break
+
+        ollamas = []
+        if ollama_models_dir is not None:
+            manifests_dir = os.path.join(ollama_models_dir, "manifests")
+            for root, dirs, files in os.walk(manifests_dir):
+                for file in files:
+                    ollamas.append(os.path.join(root, file))
+
+        chat_format = mz_llama_cpp.get_llama_cpp_chat_handlers()
+        return {
+            "required": {
+                "ollama": (ollamas,),
+                "chat_format": (["auto"] + chat_format, {"default": "auto"}),
+            },
+            "optional": {
+            },
+        }
+
+    RETURN_TYPES = ("LLamaCPPModelConfig",)
+    RETURN_NAMES = ("llama_cpp_model_config",)
+
+    FUNCTION = "create"
+    CATEGORY = f"{CATEGORY_NAME}/others"
+
+    def create(self, **kwargs):
+        kwargs = kwargs.copy()
+
+        ollama = kwargs.get("ollama", "")
+        ollama_cpp_model = None
+        if os.path.exists(ollama):
+            # {"schemaVersion":2,"mediaType":"application/vnd.docker.distribution.manifest.v2+json","config":{"mediaType":"application/vnd.docker.container.image.v1+json","digest":"sha256:887433b89a901c156f7e6944442f3c9e57f3c55d6ed52042cbb7303aea994290","size":483},"layers":[{"mediaType":"application/vnd.ollama.image.model","digest":"sha256:c1864a5eb19305c40519da12cc543519e48a0697ecd30e15d5ac228644957d12","size":1678447520},{"mediaType":"application/vnd.ollama.image.license","digest":"sha256:097a36493f718248845233af1d3fefe7a303f864fae13bc31a3a9704229378ca","size":8433},{"mediaType":"application/vnd.ollama.image.template","digest":"sha256:109037bec39c0becc8221222ae23557559bc594290945a2c4221ab4f303b8871","size":136},{"mediaType":"application/vnd.ollama.image.params","digest":"sha256:22a838ceb7fb22755a3b0ae9b4eadde629d19be1f651f73efb8c6b4e2cd0eea0","size":84}]}
+            with open(ollama, "r", encoding="utf-8") as f:
+                data = json.load(f)
+                if "layers" in data:
+                    for layer in data["layers"]:
+                        if "mediaType" in layer and layer["mediaType"] == "application/vnd.ollama.image.model":
+                            ollama_cpp_model = layer["digest"]
+                            break
+
+        if ollama_cpp_model is None:
+            raise ValueError("Invalid ollama file")
+        
+        if ollama_cpp_model.startswith("sha256:"):
+            ollama_cpp_model = ollama_cpp_model[7:]
+        # ollama = C:\Users\admin\.ollama\models\manifests\registry.ollama.ai\library\gemma\2b
+        models_dir = ollama[:ollama.rfind("manifests")]
+        ollama_cpp_model = os.path.join(models_dir, "blobs", f"sha256-{ollama_cpp_model}")
+
+        if not os.path.exists(ollama_cpp_model):
+            raise ValueError(f"Model not found at: {ollama_cpp_model}")
+
+        llama_cpp_model = ollama_cpp_model
+
+        chat_format = kwargs.get("chat_format", "auto")
+        if chat_format == "auto":
+            chat_format = None
+        return ({
+            "type": "ManualSelect",
+            "model_path": llama_cpp_model,
+            "chat_format": chat_format,
+        },)
+
+
+NODE_CLASS_MAPPINGS["MZ_OllamaModelConfig_ManualSelect"] = MZ_OllamaModelConfig_ManualSelect
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_OllamaModelConfig_ManualSelect"] = f"{AUTHOR_NAME} - ModelConfigManualSelect(OllamaFile)"
+
+
+class MZ_LLamaCPPModelConfig_ManualSelect:
+    @ classmethod
     def INPUT_TYPES(s):
         gguf_files = Utils.get_gguf_files()
 
@@ -519,8 +600,12 @@ NODE_DISPLAY_NAME_MAPPINGS[
     "MZ_ImageInterrogatorModelConfig_DownloaderSelect"] = f"{AUTHOR_NAME} - ModelConfigDownloaderSelect(ImageInterrogator)"
 
 
-from . import mz_gen_translate
-mz_gen_translate.gen_translate(NODE_DISPLAY_NAME_MAPPINGS, NODE_CLASS_MAPPINGS)
+try:
+    from . import mz_gen_translate
+    mz_gen_translate.gen_translate(
+        NODE_DISPLAY_NAME_MAPPINGS, NODE_CLASS_MAPPINGS)
+except Exception as e:
+    print(f"Failed to generate translation: {e}")
 
 
 from .v1.init import NODE_CLASS_MAPPINGS as DEPRECATED_NODE_CLASS_MAPPINGS
