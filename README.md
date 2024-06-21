@@ -32,6 +32,8 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 
 
 + ModelConfigManualSelect (Ollama)
+  
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/2009e330-0f1f-4f28-9b4c-8446d3cdc519)
 
 
 + CLIPTextEncode (LLamaCPP Universal)
