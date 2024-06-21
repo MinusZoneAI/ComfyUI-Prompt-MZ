@@ -7,6 +7,7 @@
 Use llama.cpp to assist in generating some nodes related to prompt words, including beautifying prompt words and image recognition similar to clip-interrogator
 
 ## Recent changes 
+* [2024-06-22] 新增Florence-2-large图片反推模型节点 (Added Florence-2-large image interrogation model node)
 * [2024-06-20] 新增选择本机ollama模型的节点 (Added nodes to select local ollama models)
 * [2024-06-05] 新增千问2.0预设模型 (Added Qianwen 2.0 preset model)
 * [2024-06-05] 可选chat_format,图片反推后处理 (Optional chat_format, post-processing after image interrogation)
@@ -27,6 +28,9 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
 2. Restart ComfyUI.
  
 ## Nodes
++ MZ_Florence2CLIPTextEncode
+
+
 + ModelConfigManualSelect (Ollama)
 
 

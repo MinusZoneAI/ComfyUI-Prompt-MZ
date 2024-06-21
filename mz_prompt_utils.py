@@ -615,8 +615,14 @@ class Utils:
                 self.pbar = comfy.utils.ProgressBar(steps)
 
             def update(self, step, total_steps, pil_img):
-                self.pbar.update_absolute(
-                    step, total_steps, ("JPEG", pil_img, 512))
+                if pil_img is None:
+                    self.pbar.update(step, total_steps)
+
+                else:
+                    if pil_img.mode != "RGB":
+                        pil_img = pil_img.convert("RGB")
+                    self.pbar.update_absolute(
+                        step, total_steps, ("JPEG", pil_img, 512))
 
         return pb(steps)
 

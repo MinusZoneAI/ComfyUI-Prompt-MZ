@@ -91,6 +91,7 @@ const my_ui = {
       case "MZ_BaseLLavaImageInterrogator":
       case "MZ_LLamaCPPCLIPTextEncode":
       case "MZ_ImageInterrogatorCLIPTextEncode":
+      case "MZ_Florence2CLIPTextEncode":
         // Node Created
         const onNodeCreated = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {

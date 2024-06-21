@@ -110,12 +110,13 @@ class MZ_OllamaModelConfig_ManualSelect:
 
         if ollama_cpp_model is None:
             raise ValueError("Invalid ollama file")
-        
+
         if ollama_cpp_model.startswith("sha256:"):
             ollama_cpp_model = ollama_cpp_model[7:]
         # ollama = C:\Users\admin\.ollama\models\manifests\registry.ollama.ai\library\gemma\2b
         models_dir = ollama[:ollama.rfind("manifests")]
-        ollama_cpp_model = os.path.join(models_dir, "blobs", f"sha256-{ollama_cpp_model}")
+        ollama_cpp_model = os.path.join(
+            models_dir, "blobs", f"sha256-{ollama_cpp_model}")
 
         if not os.path.exists(ollama_cpp_model):
             raise ValueError(f"Model not found at: {ollama_cpp_model}")
@@ -598,6 +599,43 @@ class MZ_ImageInterrogatorModelConfig_DownloaderSelect:
 NODE_CLASS_MAPPINGS["MZ_ImageInterrogatorModelConfig_DownloaderSelect"] = MZ_ImageInterrogatorModelConfig_DownloaderSelect
 NODE_DISPLAY_NAME_MAPPINGS[
     "MZ_ImageInterrogatorModelConfig_DownloaderSelect"] = f"{AUTHOR_NAME} - ModelConfigDownloaderSelect(ImageInterrogator)"
+
+
+class MZ_Florence2CLIPTextEncode:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                # "model_name": ("STRING", {"default": "Florence-2-large", "placeholder": "model_path"}),
+                "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
+                "keep_device": ([False, True], {"default": False}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
+            "optional": {
+                "image": ("IMAGE",),
+                "clip": ("CLIP", ),
+                # "customize_instruct": ("CustomizeInstruct", ),
+                "captioner_config": ("ImageCaptionerConfig", ),
+            },
+        }
+
+    RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+
+    def encode(self, **kwargs):
+        kwargs = kwargs.copy()
+        from . import mz_transformers
+        importlib.reload(mz_transformers)
+
+        return mz_transformers.florence2_node_encode(kwargs)
+
+
+NODE_CLASS_MAPPINGS["MZ_Florence2CLIPTextEncode"] = MZ_Florence2CLIPTextEncode
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_Florence2CLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(Florence-2)"
 
 
 try:
