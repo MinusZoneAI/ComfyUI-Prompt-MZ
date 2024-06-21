@@ -29,6 +29,11 @@ Use llama.cpp to assist in generating some nodes related to prompt words, includ
  
 ## Nodes
 + MZ_Florence2CLIPTextEncode
+  
+![image](https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ/assets/5035199/b60bb22c-f42b-4c4f-a0ac-20a6c09c9046)
+
+
+
 
 
 + ModelConfigManualSelect (Ollama)
