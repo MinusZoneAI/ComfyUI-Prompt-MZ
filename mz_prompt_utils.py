@@ -422,12 +422,24 @@ class Utils:
     def get_device():
         return comfy.model_management.get_torch_device()
 
+    def download_small_file(url, filepath):
+        response = requests.get(url)
+        os.makedirs(os.path.dirname(filepath), exist_ok=True)
+        with open(filepath, "wb") as f:
+            f.write(response.content)
+        return filepath
+
     def download_file(url, filepath, threads=8, retries=6):
 
         get_size_tmp = requests.get(url, stream=True)
         total_size = int(get_size_tmp.headers.get("content-length", 0))
 
         print(f"Downloading {url} to {filepath} with size {total_size} bytes")
+
+        # 如果文件大小小于 50MB,使用download_small_file
+        if total_size < 50 * 1024 * 1024:
+            return Utils.download_small_file(url, filepath)
+
 
         base_filename = os.path.basename(filepath)
         cache_dir = os.path.join(os.path.dirname(

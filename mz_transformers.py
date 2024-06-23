@@ -3,7 +3,7 @@ import shutil
 import subprocess
 
 
-def florence2_captioner(args_dict):
+def transformers_captioner(args_dict, myfunc):
     from . import mz_prompt_utils
     import PIL.Image as Image
     captioner_config = args_dict.get("captioner_config", {})
@@ -59,13 +59,15 @@ def florence2_captioner(args_dict):
             thumbnail,
         )
 
-        response = florence2_node_encode(onec_args_dict)
+        response = myfunc(onec_args_dict)
         response = response.get("result", ())[0]
         response = response.strip()
 
         if response != "":
             with open(caption_file, "w") as f:
-                f.write(response)
+                prompt_fixed_beginning = captioner_config.get(
+                    "prompt_fixed_beginning", "")
+                f.write(prompt_fixed_beginning + response)
 
         result.append(response)
     return result
@@ -75,7 +77,7 @@ def florence2_node_encode(args_dict):
     args_dict = args_dict.copy()
     captioner_config = args_dict.get("captioner_config", None)
     if captioner_config is not None:
-        florence2_captioner(args_dict)
+        transformers_captioner(args_dict, florence2_node_encode)
         # raise Exception(
         #     "图片批量反推任务已完成 ; Image batch reverse push task completed")
         return {"ui": {"string": ["图片批量反推任务已完成 ; Image batch reverse push task completed",]}, "result": ("", None)}
@@ -85,24 +87,30 @@ def florence2_node_encode(args_dict):
     from . import mz_prompt_utils
     from .mz_prompt_utils import Utils
 
-    florence2_large_files = [
-        {
-            "file_path": "pytorch_model.bin",
-            "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large/repo?Revision=master&FilePath=pytorch_model.bin"
-        }
-    ]
+    florence2_large_files_map = {
+        "Florence-2-large": [
+            {
+                "file_path": "pytorch_model.bin",
+                "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large/repo?Revision=master&FilePath=pytorch_model.bin"
+            }
+        ],
+        "Florence-2-large-ft": [
+            {
+                "file_path": "pytorch_model.bin",
+                "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large-ft/repo?Revision=master&FilePath=pytorch_model.bin"
+            }
+        ],
+    }
 
-    # model_name = args_dict.get("model_name")
-    # 判断是否是绝对路径
-    # if os.path.isabs(model_name):
-    #     model_path = model_name
-    # else:
     llm_path = os.path.join(
         folder_paths.models_dir,
         "LLM",
     )
     os.makedirs(llm_path, exist_ok=True)
-    model_path = os.path.join(llm_path, "Florence-2-large")
+
+    model_name = args_dict.get("model_name", "Florence-2-large")
+
+    model_path = os.path.join(llm_path, model_name)
 
     if not os.path.exists(model_path):
         # GIT_LFS_SKIP_SMUDGE=1 git clone https://www.modelscope.cn/AI-ModelScope/Florence-2-large.git
@@ -113,6 +121,7 @@ def florence2_node_encode(args_dict):
         if original_env is not None:
             os.environ["GIT_LFS_SKIP_SMUDGE"] = original_env
 
+    florence2_large_files = florence2_large_files_map.get(model_name, [])
     for file_info in florence2_large_files:
         file_path = os.path.join(model_path, file_info["file_path"])
         # 判断文件大小小于1M
@@ -136,7 +145,7 @@ def florence2_node_encode(args_dict):
             local_files_only=True,
             trust_remote_code=True,
         )
-        model.to(device)
+        model.to(device).eval()
         Utils.cache_set(f"florence_model_and_opt_", model)
 
     processor = AutoProcessor.from_pretrained(
@@ -178,6 +187,182 @@ def florence2_node_encode(args_dict):
         del model
         torch.cuda.empty_cache()
         Utils.cache_set(f"florence_model_and_opt_", None)
+
+    conditionings = None
+    clip = args_dict.get("clip", None)
+    if clip is not None:
+        conditionings = Utils.a1111_clip_text_encode(
+            clip, response, )
+
+    return {"ui": {"string": [mz_prompt_utils.Utils.to_debug_prompt(response),]}, "result": (response, conditionings)}
+
+
+def paligemma_node_encode(args_dict):
+    args_dict = args_dict.copy()
+    captioner_config = args_dict.get("captioner_config", None)
+    if captioner_config is not None:
+        transformers_captioner(args_dict, paligemma_node_encode)
+        # raise Exception(
+        #     "图片批量反推任务已完成 ; Image batch reverse push task completed")
+        return {"ui": {"string": ["图片批量反推任务已完成 ; Image batch reverse push task completed",]}, "result": ("", None)}
+
+    import torch
+    import folder_paths
+    from . import mz_prompt_utils
+    from .mz_prompt_utils import Utils
+
+    paligemma_files_map = {
+        "common": [
+
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Fadded_tokens.json",
+                "file_path": "added_tokens.json"
+            },
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Fconfig.json",
+                "file_path": "config.json"
+            },
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Fgeneration_config.json",
+                "file_path": "generation_config.json"
+            },
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Fpreprocessor_config.json",
+                "file_path": "preprocessor_config.json"
+            },
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Fspecial_tokens_map.json",
+                "file_path": "special_tokens_map.json"
+            },
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Ftokenizer.json",
+                "file_path": "tokenizer.json"
+            },
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Ftokenizer.model",
+                "file_path": "tokenizer.model"
+            },
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Ftokenizer_config.json",
+                "file_path": "tokenizer_config.json"
+            },
+        ],
+        "paligemma-sd3-long-captioner": [
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-merge%2Fmodel.safetensors",
+                "file_path": "model.safetensors"
+            },
+        ],
+        "paligemma-sd3-long-captioner-v2": [
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sd3-long-captioner-v2-merge%2Fmodel.safetensors",
+                "file_path": "model.safetensors"
+            },
+        ],
+        "paligemma-sdxl-long-captioner": [
+            {
+                "url": "https://www.modelscope.cn/api/v1/models/wailovet/sd-models/repo?Revision=master&FilePath=sdxl-long-captioner-merge%2Fmodel.safetensors",
+                "file_path": "model.safetensors"
+            },
+        ],
+    }
+
+    llm_path = os.path.join(
+        folder_paths.models_dir,
+        "LLM",
+    )
+    os.makedirs(llm_path, exist_ok=True)
+
+    model_name = args_dict.get("model_name")
+
+    model_path = os.path.join(llm_path, model_name)
+
+    common_files = paligemma_files_map.get("common", [])
+    for file_info in common_files:
+        file_path = os.path.join(model_path, file_info["file_path"])
+        if not os.path.exists(file_path):
+            Utils.download_file(file_info["url"], file_path)
+
+    paligemma_files = paligemma_files_map.get(model_name, [])
+    for file_info in paligemma_files:
+        file_path = os.path.join(model_path, file_info["file_path"])
+
+        if not os.path.exists(file_path):
+            Utils.download_file(file_info["url"], file_path)
+
+    from transformers import PaliGemmaForConditionalGeneration, PaliGemmaProcessor
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = Utils.cache_get(f"paligemma_model_and_opt_")
+    if model is None:
+        model = PaliGemmaForConditionalGeneration.from_pretrained(
+            model_path,
+            local_files_only=True,
+            torch_dtype=torch.float16,
+        )
+        model.to(device).eval()
+        Utils.cache_set(f"paligemma_model_and_opt_", model)
+
+    processor = PaliGemmaProcessor.from_pretrained(
+        model_path,
+        local_files_only=True,
+    )
+    tensor_image = args_dict.get("image")
+    pil_image = Utils.tensor2pil(tensor_image)
+    resolution = args_dict.get("resolution", 512)
+    pil_image = Utils.resize_max(
+        pil_image, resolution, resolution).convert("RGB")
+
+    # prefix
+    prompt = "caption en"
+    model_inputs = processor(
+        text=prompt, images=pil_image, return_tensors="pt").to('cuda')
+    input_len = model_inputs["input_ids"].shape[-1]
+
+    def modify_caption(caption: str) -> str:
+        """
+        Removes specific prefixes from captions.
+        Args:
+            caption (str): A string containing a caption.
+        Returns:
+            str: The caption with the prefix removed if it was present.
+        """
+        # Define the prefixes to remove
+        import re
+        prefix_substrings = [
+            ('captured from ', ''),
+            ('captured at ', '')
+        ]
+
+        # Create a regex pattern to match any of the prefixes
+        pattern = '|'.join([re.escape(opening)
+                           for opening, _ in prefix_substrings])
+        replacers = {opening: replacer for opening,
+                     replacer in prefix_substrings}
+
+        # Function to replace matched prefix with its corresponding replacement
+        def replace_fn(match):
+            return replacers[match.group(0)]
+
+        # Apply the regex to the caption
+        return re.sub(pattern, replace_fn, caption, count=1, flags=re.IGNORECASE)
+
+    with torch.inference_mode():
+        generation = model.generate(
+            **model_inputs, max_new_tokens=256, do_sample=False)
+        generation = generation[0][input_len:]
+        decoded = processor.decode(generation, skip_special_tokens=True)
+
+        modified_caption = modify_caption(decoded)
+        # print(modified_caption)
+
+    response = modified_caption
+
+    keep_device = args_dict.get("keep_device", False)
+    if not keep_device:
+        model.cpu()
+        del model
+        torch.cuda.empty_cache()
+        Utils.cache_set(f"paligemma_model_and_opt_", None)
 
     conditionings = None
     clip = args_dict.get("clip", None)

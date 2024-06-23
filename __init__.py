@@ -352,6 +352,7 @@ class MZ_ImageCaptionerConfig:
                 "caption_suffix": ("STRING", {"default": ".caption"}),
                 "force_update": ([False, True], {"default": False}),
                 "retry_keyword": ("STRING", {"default": "not,\",error"}),
+                "prompt_fixed_beginning": ("STRING", {"default": "", }),
             },
             "optional": {
 
@@ -606,16 +607,17 @@ class MZ_Florence2CLIPTextEncode:
     def INPUT_TYPES(s):
         return {
             "required": {
-                # "model_name": ("STRING", {"default": "Florence-2-large", "placeholder": "model_path"}),
+                "model_name": ([
+                    "Florence-2-large-ft",
+                    "Florence-2-large",
+                ],),
                 "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
                 "keep_device": ([False, True], {"default": False}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                # "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             },
             "optional": {
                 "image": ("IMAGE",),
                 "clip": ("CLIP", ),
-                # "customize_instruct": ("CustomizeInstruct", ),
-                "captioner_config": ("ImageCaptionerConfig", ),
             },
         }
 
@@ -637,6 +639,111 @@ NODE_CLASS_MAPPINGS["MZ_Florence2CLIPTextEncode"] = MZ_Florence2CLIPTextEncode
 NODE_DISPLAY_NAME_MAPPINGS[
     "MZ_Florence2CLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(Florence-2)"
 
+
+class MZ_Florence2Captioner:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model_name": ([
+                    "Florence-2-large-ft",
+                    "Florence-2-large",
+                ],),
+                "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
+                "captioner_config": ("ImageCaptionerConfig", ),
+            },
+            "optional": {
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("debug",)
+    OUTPUT_NODE = True
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+
+    def encode(self, **kwargs):
+        kwargs = kwargs.copy()
+        from . import mz_transformers
+        importlib.reload(mz_transformers)
+        return mz_transformers.florence2_node_encode(kwargs)
+
+
+NODE_CLASS_MAPPINGS["MZ_Florence2Captioner"] = MZ_Florence2Captioner
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_Florence2Captioner"] = f"{AUTHOR_NAME} - Captioner(Florence-2)"
+
+
+class MZ_PaliGemmaCLIPTextEncode:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model_name": ([
+                    "paligemma-sd3-long-captioner-v2",
+                    "paligemma-sd3-long-captioner",
+                ],),
+                "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
+                "keep_device": ([False, True], {"default": False}),
+                # "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+            },
+            "optional": {
+                "image": ("IMAGE",),
+                "clip": ("CLIP", ),
+            },
+        }
+
+    RETURN_TYPES = ("STRING", "CONDITIONING",)
+    RETURN_NAMES = ("text", "conditioning",)
+    OUTPUT_NODE = True
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+
+    def encode(self, **kwargs):
+        kwargs = kwargs.copy()
+        from . import mz_transformers
+        importlib.reload(mz_transformers)
+
+        return mz_transformers.paligemma_node_encode(kwargs)
+
+
+NODE_CLASS_MAPPINGS["MZ_PaliGemmaCLIPTextEncode"] = MZ_PaliGemmaCLIPTextEncode
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_PaliGemmaCLIPTextEncode"] = f"{AUTHOR_NAME} - CLIPTextEncode(PaliGemma)"
+
+
+class MZ_PaliGemmaCaptioner:
+    @classmethod
+    def INPUT_TYPES(s):
+        return {
+            "required": {
+                "model_name": ([
+                    "paligemma-sd3-long-captioner-v2",
+                    "paligemma-sd3-long-captioner",
+                ],),
+                "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
+                "captioner_config": ("ImageCaptionerConfig", ),
+            },
+            "optional": {
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("debug",)
+    OUTPUT_NODE = True
+    FUNCTION = "encode"
+    CATEGORY = CATEGORY_NAME
+
+    def encode(self, **kwargs):
+        kwargs = kwargs.copy()
+        from . import mz_transformers
+        importlib.reload(mz_transformers)
+        return mz_transformers.paligemma_node_encode(kwargs)
+
+
+NODE_CLASS_MAPPINGS["MZ_PaliGemmaCaptioner"] = MZ_PaliGemmaCaptioner
+NODE_DISPLAY_NAME_MAPPINGS[
+    "MZ_PaliGemmaCaptioner"] = f"{AUTHOR_NAME} - Captioner(PaliGemma)"
 
 try:
     from . import mz_gen_translate
