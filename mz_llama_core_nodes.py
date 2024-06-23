@@ -319,7 +319,9 @@ def image_interrogator_captioner(args_dict):
 
         if response != "":
             with open(caption_file, "w") as f:
-                f.write(response)
+                prompt_fixed_beginning = captioner_config.get(
+                    "prompt_fixed_beginning", "")
+                f.write(prompt_fixed_beginning + response)
 
         result.append(response)
 
