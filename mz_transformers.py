@@ -17,6 +17,7 @@ def transformers_captioner(args_dict, myfunc):
     retry_keywords = [k for k in retry_keywords if k != ""]
 
     pre_images = []
+    # print("directory:", directory)
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
@@ -36,40 +37,44 @@ def transformers_captioner(args_dict, myfunc):
 
     pb = mz_prompt_utils.Utils.progress_bar(len(pre_images))
     for i in range(len(pre_images)):
-        pre_image = pre_images[i]
-        image_path = pre_image["image_path"]
-        caption_file = pre_image["caption_path"]
+        try:
+            pre_image = pre_images[i]
+            image_path = pre_image["image_path"]
+            caption_file = pre_image["caption_path"]
 
-        onec_args_dict = args_dict.copy()
-        del onec_args_dict["captioner_config"]
+            onec_args_dict = args_dict.copy()
+            del onec_args_dict["captioner_config"]
 
-        pil_image = Image.open(image_path)
-        onec_args_dict["image"] = mz_prompt_utils.Utils.pil2tensor(pil_image)
+            pil_image = Image.open(image_path)
+            onec_args_dict["image"] = mz_prompt_utils.Utils.pil2tensor(
+                pil_image)
 
-        if i < len(pre_images) - 1:
-            onec_args_dict["keep_device"] = True
+            if i < len(pre_images) - 1:
+                onec_args_dict["keep_device"] = True
 
-        thumbnail = Image.new("RGB", (pil_image.width, pil_image.height))
-        thumbnail.paste(pil_image)
+            thumbnail = Image.new("RGB", (pil_image.width, pil_image.height))
+            thumbnail.paste(pil_image)
 
-        pb.update(
-            i,
-            len(pre_images),
-            # 转RGB
-            thumbnail,
-        )
+            pb.update(
+                i,
+                len(pre_images),
+                # 转RGB
+                thumbnail,
+            )
 
-        response = myfunc(onec_args_dict)
-        response = response.get("result", ())[0]
-        response = response.strip()
+            response = myfunc(onec_args_dict)
+            response = response.get("result", ())[0]
+            response = response.strip()
 
-        if response != "":
-            with open(caption_file, "w") as f:
-                prompt_fixed_beginning = captioner_config.get(
-                    "prompt_fixed_beginning", "")
-                f.write(prompt_fixed_beginning + response)
+            if response != "":
+                with open(caption_file, "w") as f:
+                    prompt_fixed_beginning = captioner_config.get(
+                        "prompt_fixed_beginning", "")
+                    f.write(prompt_fixed_beginning + response)
 
-        result.append(response)
+            result.append(response)
+        except Exception as e:
+            print(f"For image {image_path}, error: {e}")
     return result
 
 

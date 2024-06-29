@@ -670,7 +670,6 @@ class MZ_Florence2Captioner:
         from . import mz_transformers
         importlib.reload(mz_transformers)
 
-        
         kwargs["captioner_config"] = {
             "directory": kwargs["directory"],
             "resolution": kwargs["resolution"],
