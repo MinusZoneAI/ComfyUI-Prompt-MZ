@@ -92,12 +92,43 @@ def florence2_node_encode(args_dict):
             {
                 "file_path": "pytorch_model.bin",
                 "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large/repo?Revision=master&FilePath=pytorch_model.bin"
+            },
+
+            # tokenizer.json
+            {
+                "file_path": "tokenizer.json",
+                "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large/repo?Revision=master&FilePath=tokenizer.json"
+            },
+            # tokenizer_config.json
+            {
+                "file_path": "tokenizer_config.json",
+                "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large/repo?Revision=master&FilePath=tokenizer_config.json"
+            },
+            # vocab.json
+            {
+                "file_path": "vocab.json",
+                "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large/repo?Revision=master&FilePath=vocab.json"
             }
         ],
         "Florence-2-large-ft": [
             {
                 "file_path": "pytorch_model.bin",
                 "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large-ft/repo?Revision=master&FilePath=pytorch_model.bin"
+            },
+            # tokenizer.json
+            {
+                "file_path": "tokenizer.json",
+                "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large-ft/repo?Revision=master&FilePath=tokenizer.json"
+            },
+            # tokenizer_config.json
+            {
+                "file_path": "tokenizer_config.json",
+                "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large-ft/repo?Revision=master&FilePath=tokenizer_config.json"
+            },
+            # vocab.json
+            {
+                "file_path": "vocab.json",
+                "url": "https://www.modelscope.cn/api/v1/models/AI-ModelScope/Florence-2-large-ft/repo?Revision=master&FilePath=vocab.json"
             }
         ],
     }
