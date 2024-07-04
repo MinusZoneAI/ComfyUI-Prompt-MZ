@@ -651,6 +651,7 @@ class MZ_Florence2Captioner:
                 ],),
                 "directory": ("STRING", {"default": "", "placeholder": "directory"}),
                 "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
+                "batch_size": ("INT", {"default": 1, "min": 1, "max": 0xffffffffffffffff}),
                 "caption_suffix": ("STRING", {"default": ".caption"}),
                 "force_update": ([False, True], {"default": False}),
                 "prompt_fixed_beginning": ("STRING", {"default": "", }),
@@ -673,6 +674,7 @@ class MZ_Florence2Captioner:
         kwargs["captioner_config"] = {
             "directory": kwargs["directory"],
             "resolution": kwargs["resolution"],
+            "batch_size": kwargs["batch_size"],
             "caption_suffix": kwargs["caption_suffix"],
             "force_update": kwargs["force_update"],
             "prompt_fixed_beginning": kwargs["prompt_fixed_beginning"],
