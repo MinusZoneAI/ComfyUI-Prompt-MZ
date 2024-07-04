@@ -44,6 +44,7 @@ def transformers_captioner(args_dict, myfunc):
     pb = mz_prompt_utils.Utils.progress_bar(len(pre_images))
     images_batch = []
     for i in range(len(pre_images)):
+        # print(f"Processing image {i+1}/{len(pre_images)}")
         try:
             pre_image = pre_images[i]
             image_path = pre_image["image_path"]
@@ -53,11 +54,13 @@ def transformers_captioner(args_dict, myfunc):
             del onec_args_dict["captioner_config"]
 
             pil_image = Image.open(image_path)
+            images_batch.append({
+                "image_path": image_path,
+                "pil_image": pil_image
+            })
+
+            
             if len(images_batch) < batch_size:
-                images_batch.append({
-                    "image_path": image_path,
-                    "pil_image": pil_image
-                })
                 if i < len(pre_images) - 1:
                     continue
 
