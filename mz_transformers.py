@@ -1,3 +1,4 @@
+import json
 import os
 import shutil
 import subprocess
@@ -36,6 +37,8 @@ def transformers_captioner(args_dict, myfunc):
                 })
 
     result = []
+
+    print(f"Total images: {len(pre_images)} : {json.dumps(pre_images, indent=4)}")
 
     pb = mz_prompt_utils.Utils.progress_bar(len(pre_images))
     images_batch = []
@@ -85,15 +88,16 @@ def transformers_captioner(args_dict, myfunc):
 
             responses = myfunc(onec_args_dict)
             # print(f"responses: {responses}")
-            for i in range(len(images_batch)):
-                item = images_batch[i]
+            for j in range(len(images_batch)):
+                item = images_batch[j]
                 image_path = item["image_path"]
                 caption_file = os.path.join(
                     os.path.dirname(image_path), os.path.splitext(image_path)[0] + caption_suffix)
-                response = responses[i]
+                response = responses[j]
                 response = response.strip()
 
                 print(f"========================{image_path}========================")
+                print(caption_file)
                 print(image_path)
                 print(response)
                 print("")
