@@ -38,7 +38,8 @@ def transformers_captioner(args_dict, myfunc):
 
     result = []
 
-    print(f"Total images: {len(pre_images)} : {json.dumps(pre_images, indent=4)}")
+    # print(f"Total images: {len(pre_images)} : {json.dumps(pre_images, indent=4)}")
+    print(f"Total images: {len(pre_images)}")
 
     pb = mz_prompt_utils.Utils.progress_bar(len(pre_images))
     images_batch = []
@@ -96,14 +97,11 @@ def transformers_captioner(args_dict, myfunc):
                 response = responses[j]
                 response = response.strip()
 
-                print(f"========================{image_path}========================")
-                print(caption_file)
+                print(f"==={image_path}===")
                 print(image_path)
                 print(response)
                 print("")
                 print("")
-                print("")
-
 
                 if response != "":
                     with open(caption_file, "w") as f:
