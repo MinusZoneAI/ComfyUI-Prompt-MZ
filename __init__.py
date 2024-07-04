@@ -649,8 +649,12 @@ class MZ_Florence2Captioner:
                     "Florence-2-large-ft",
                     "Florence-2-large",
                 ],),
+                "directory": ("STRING", {"default": "", "placeholder": "directory"}),
                 "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
-                "captioner_config": ("ImageCaptionerConfig", ),
+                "batch_size": ("INT", {"default": 1, "min": 1, "max": 0xffffffffffffffff}),
+                "caption_suffix": ("STRING", {"default": ".caption"}),
+                "force_update": ([False, True], {"default": False}),
+                "prompt_fixed_beginning": ("STRING", {"default": "", }),
             },
             "optional": {
             },
@@ -666,6 +670,16 @@ class MZ_Florence2Captioner:
         kwargs = kwargs.copy()
         from . import mz_transformers
         importlib.reload(mz_transformers)
+
+        kwargs["captioner_config"] = {
+            "directory": kwargs["directory"],
+            "resolution": kwargs["resolution"],
+            "batch_size": kwargs["batch_size"],
+            "caption_suffix": kwargs["caption_suffix"],
+            "force_update": kwargs["force_update"],
+            "prompt_fixed_beginning": kwargs["prompt_fixed_beginning"],
+        }
+
         return mz_transformers.florence2_node_encode(kwargs)
 
 
@@ -721,8 +735,11 @@ class MZ_PaliGemmaCaptioner:
                     "paligemma-sd3-long-captioner-v2",
                     "paligemma-sd3-long-captioner",
                 ],),
+                "directory": ("STRING", {"default": "", "placeholder": "directory"}),
                 "resolution": ("INT", {"default": 512, "min": 128, "max": 0xffffffffffffffff}),
-                "captioner_config": ("ImageCaptionerConfig", ),
+                "caption_suffix": ("STRING", {"default": ".caption"}),
+                "force_update": ([False, True], {"default": False}),
+                "prompt_fixed_beginning": ("STRING", {"default": "", }),
             },
             "optional": {
             },
@@ -738,6 +755,13 @@ class MZ_PaliGemmaCaptioner:
         kwargs = kwargs.copy()
         from . import mz_transformers
         importlib.reload(mz_transformers)
+        kwargs["captioner_config"] = {
+            "directory": kwargs["directory"],
+            "resolution": kwargs["resolution"],
+            "caption_suffix": kwargs["caption_suffix"],
+            "force_update": kwargs["force_update"],
+            "prompt_fixed_beginning": kwargs["prompt_fixed_beginning"],
+        }
         return mz_transformers.paligemma_node_encode(kwargs)
 
 

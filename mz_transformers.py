@@ -1,6 +1,8 @@
+import json
 import os
 import shutil
 import subprocess
+import traceback
 
 
 def transformers_captioner(args_dict, myfunc):
@@ -11,12 +13,14 @@ def transformers_captioner(args_dict, myfunc):
     force_update = captioner_config.get("force_update", False)
     caption_suffix = captioner_config.get("caption_suffix", "")
     retry_keyword = captioner_config.get("retry_keyword", "")
+    batch_size = captioner_config.get("batch_size", 1)
     retry_keywords = retry_keyword.split(",")
 
     retry_keywords = [k.strip() for k in retry_keywords]
     retry_keywords = [k for k in retry_keywords if k != ""]
 
     pre_images = []
+    # print("directory:", directory)
     for root, dirs, files in os.walk(directory):
         for file in files:
             if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
@@ -34,42 +38,86 @@ def transformers_captioner(args_dict, myfunc):
 
     result = []
 
+    # print(f"Total images: {len(pre_images)} : {json.dumps(pre_images, indent=4)}")
+    print(f"Total images: {len(pre_images)}")
+
     pb = mz_prompt_utils.Utils.progress_bar(len(pre_images))
+    images_batch = []
     for i in range(len(pre_images)):
-        pre_image = pre_images[i]
-        image_path = pre_image["image_path"]
-        caption_file = pre_image["caption_path"]
+        # print(f"Processing image {i+1}/{len(pre_images)}")
+        try:
+            pre_image = pre_images[i]
+            image_path = pre_image["image_path"]
+            caption_file = pre_image["caption_path"]
 
-        onec_args_dict = args_dict.copy()
-        del onec_args_dict["captioner_config"]
+            onec_args_dict = args_dict.copy()
+            del onec_args_dict["captioner_config"]
 
-        pil_image = Image.open(image_path)
-        onec_args_dict["image"] = mz_prompt_utils.Utils.pil2tensor(pil_image)
+            pil_image = Image.open(image_path)
+            images_batch.append({
+                "image_path": image_path,
+                "pil_image": pil_image
+            })
 
-        if i < len(pre_images) - 1:
-            onec_args_dict["keep_device"] = True
+            
+            if len(images_batch) < batch_size:
+                if i < len(pre_images) - 1:
+                    continue
 
-        thumbnail = Image.new("RGB", (pil_image.width, pil_image.height))
-        thumbnail.paste(pil_image)
+            if i < len(pre_images) - 1:
+                onec_args_dict["keep_device"] = True
 
-        pb.update(
-            i,
-            len(pre_images),
-            # 转RGB
-            thumbnail,
-        )
+            pil_images = []
+            for j in range(len(images_batch)):
+                pil_images.append(images_batch[j]["pil_image"])
 
-        response = myfunc(onec_args_dict)
-        response = response.get("result", ())[0]
-        response = response.strip()
+            # onec_args_dict["image"] = mz_prompt_utils.Utils.pil2tensor(
+            #     pil_image)
 
-        if response != "":
-            with open(caption_file, "w") as f:
-                prompt_fixed_beginning = captioner_config.get(
-                    "prompt_fixed_beginning", "")
-                f.write(prompt_fixed_beginning + response)
+            thumbnail = Image.new(
+                "RGB", (images_batch[0]["pil_image"].width * batch_size, images_batch[0]["pil_image"].height))
 
-        result.append(response)
+            for j in range(len(images_batch)):
+                pil_image = images_batch[j]["pil_image"]
+                thumbnail.paste(pil_image, (j * pil_image.width, 0))
+
+            pb.update(
+                i,
+                len(pre_images),
+                # 转RGB
+                thumbnail,
+            )
+            onec_args_dict["images"] = pil_images
+            onec_args_dict["captioner_mode"] = True
+
+            responses = myfunc(onec_args_dict)
+            # print(f"responses: {responses}")
+            for j in range(len(images_batch)):
+                item = images_batch[j]
+                image_path = item["image_path"]
+                caption_file = os.path.join(
+                    os.path.dirname(image_path), os.path.splitext(image_path)[0] + caption_suffix)
+                response = responses[j]
+                response = response.strip()
+
+                print(f"==={image_path}===")
+                print(image_path)
+                print(response)
+                print("")
+                print("")
+
+                if response != "":
+                    with open(caption_file, "w") as f:
+                        prompt_fixed_beginning = captioner_config.get(
+                            "prompt_fixed_beginning", "")
+                        f.write(prompt_fixed_beginning + response)
+
+                result.append(response)
+
+            images_batch = []
+        except Exception as e:
+            print(
+                f"For image {image_path}, error: {e} , stack: {traceback.format_exc()}")
     return result
 
 
@@ -184,16 +232,28 @@ def florence2_node_encode(args_dict):
         local_files_only=True,
         trust_remote_code=True
     )
-    tensor_image = args_dict.get("image")
-    pil_image = Utils.tensor2pil(tensor_image)
-    resolution = args_dict.get("resolution", 512)
-    pil_image = Utils.resize_max(
-        pil_image, resolution, resolution).convert("RGB")
+
+    captioner_mode = args_dict.get("captioner_mode", False)
+    if captioner_mode:
+        pil_images = args_dict.get("images", None)
+        _pil_images = []
+        for pil_image in pil_images:
+            resolution = args_dict.get("resolution", 512)
+            pil_image = Utils.resize_max(
+                pil_image, resolution, resolution).convert("RGB")
+            _pil_images.append(pil_image)
+        pil_images = _pil_images
+    else:
+        tensor_image = args_dict.get("image", None)
+        pil_image = Utils.tensor2pil(tensor_image)
+        resolution = args_dict.get("resolution", 512)
+        pil_image = Utils.resize_max(
+            pil_image, resolution, resolution).convert("RGB")
+        pil_images = [pil_image]
 
     prompt = "<MORE_DETAILED_CAPTION>"
-
-    inputs = processor(text=prompt, images=pil_image, return_tensors="pt")
-
+    prompts = [prompt for _ in pil_images]
+    inputs = processor(text=prompts, images=pil_images, return_tensors="pt")
     generated_ids = model.generate(
         input_ids=inputs["input_ids"].to(device),
         pixel_values=inputs["pixel_values"].to(device),
@@ -202,15 +262,22 @@ def florence2_node_encode(args_dict):
         do_sample=False
     )
 
-    generated_text = processor.batch_decode(
-        generated_ids, skip_special_tokens=False)[0]
+    generated_texts = processor.batch_decode(
+        generated_ids, skip_special_tokens=True)
 
-    parsed_answer = processor.post_process_generation(
-        generated_text,
-        task=prompt,
-        image_size=(pil_image.width, pil_image.height))
-    # print(f"parsed_answer: {parsed_answer}")
-    response = parsed_answer.get(prompt)
+    pil_image = pil_images[0]
+    parsed_answers = []
+    for i in range(len(generated_texts)):
+        generated_text = generated_texts[i]
+        parsed_answer = processor.post_process_generation(
+            generated_text,
+            task=prompt,
+            image_size=(pil_image.width, pil_image.height))
+        parsed_answers.append(parsed_answer)
+
+    response = []
+    for i in range(len(parsed_answers)):
+        response.append(parsed_answers[i].get(prompt))
 
     keep_device = args_dict.get("keep_device", False)
     if not keep_device:
@@ -218,6 +285,11 @@ def florence2_node_encode(args_dict):
         del model
         torch.cuda.empty_cache()
         Utils.cache_set(f"florence_model_and_opt_", None)
+
+    if captioner_mode:
+        return response
+    else:
+        response = response[0]
 
     conditionings = None
     clip = args_dict.get("clip", None)
