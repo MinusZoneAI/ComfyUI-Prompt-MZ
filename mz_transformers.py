@@ -23,7 +23,7 @@ def transformers_captioner(args_dict, myfunc):
     # print("directory:", directory)
     for root, dirs, files in os.walk(directory):
         for file in files:
-            if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png"):
+            if file.endswith(".jpg") or file.endswith(".jpeg") or file.endswith(".png") or file.endswith(".webp"):
                 image_path = os.path.join(root, file)
                 base_file_path = os.path.splitext(image_path)[0]
                 caption_file = os.path.join(
@@ -59,7 +59,6 @@ def transformers_captioner(args_dict, myfunc):
                 "pil_image": pil_image
             })
 
-            
             if len(images_batch) < batch_size:
                 if i < len(pre_images) - 1:
                     continue
