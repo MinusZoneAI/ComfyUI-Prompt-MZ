@@ -408,12 +408,29 @@ def paligemma_node_encode(args_dict):
         model_path,
         local_files_only=True,
     )
-    tensor_image = args_dict.get("image")
-    pil_image = Utils.tensor2pil(tensor_image)
-    resolution = args_dict.get("resolution", 512)
-    pil_image = Utils.resize_max(
-        pil_image, resolution, resolution).convert("RGB")
 
+    
+    captioner_mode = args_dict.get("captioner_mode", False)
+    if captioner_mode:
+        pil_images = args_dict.get("images", None)
+        _pil_images = []
+        for pil_image in pil_images:
+            resolution = args_dict.get("resolution", 512)
+            pil_image = Utils.resize_max(
+                pil_image, resolution, resolution).convert("RGB")
+            _pil_images.append(pil_image)
+        pil_images = _pil_images
+        pil_image = pil_images[0]
+    else:
+        tensor_image = args_dict.get("image", None)
+        pil_image = Utils.tensor2pil(tensor_image)
+        resolution = args_dict.get("resolution", 512)
+        pil_image = Utils.resize_max(
+            pil_image, resolution, resolution).convert("RGB")
+        pil_images = [pil_image] 
+        pil_image = pil_images[0]
+
+ 
     # prefix
     prompt = "caption en"
     model_inputs = processor(
@@ -466,6 +483,10 @@ def paligemma_node_encode(args_dict):
         torch.cuda.empty_cache()
         Utils.cache_set(f"paligemma_model_and_opt_", None)
 
+    if captioner_mode:
+        return [response]
+    else:
+        response = response[0]
     conditionings = None
     clip = args_dict.get("clip", None)
     if clip is not None:
