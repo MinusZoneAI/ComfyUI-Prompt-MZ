@@ -2,7 +2,7 @@
 name = "comfyui-prompt-mz"
 description = "Use llama.cpp to help generate some nodes for prompt word related work"
 version = "1.1.0"
-license = "LICENSE"
+license = { file = "LICENSE" }
 
 [project.urls]
 Repository = "https://github.com/MinusZoneAI/ComfyUI-Prompt-MZ"
