@@ -248,8 +248,8 @@ class MZ_LLamaCPPCLIPTextEncode:
             },
         }
 
-    RETURN_TYPES = ("STRING", "CONDITIONING",)
-    RETURN_NAMES = ("text", "conditioning",)
+    RETURN_TYPES = ("STRING", "CONDITIONING", "STRING")
+    RETURN_NAMES = ("text", "conditioning","text_raw")
     OUTPUT_NODE = True
     FUNCTION = "encode"
     CATEGORY = CATEGORY_NAME

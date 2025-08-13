@@ -235,7 +235,7 @@ def llama_cpp_node_encode(args_dict):
         conditionings = mz_prompt_utils.Utils.a1111_clip_text_encode(
             clip, response, )
 
-    return {"ui": {"string": [mz_prompt_utils.Utils.to_debug_prompt(response, translate_option),]}, "result": (response, conditionings)}
+    return {"ui": {"string": [mz_prompt_utils.Utils.to_debug_prompt(response, translate_option),]}, "result": (response, conditionings, response)}
 
 
 def image_interrogator_captioner(args_dict):
