@@ -88,6 +88,7 @@ def llama_cpp_node_encode(args_dict):
     keep_device = args_dict.get("keep_device", False)
     seed = args_dict.get("seed", -1)
     translate_option = args_dict.get("translate", False)
+    format_option = args_dict.get("format", True)
     options["seed"] = seed
     options["chat_format"] = chat_format
 
@@ -201,19 +202,20 @@ def llama_cpp_node_encode(args_dict):
         if keep_device is False:
             mz_llama_cpp.freed_gpu_memory(model_file=model_file)
 
-        # 去除换行
-        while response.find("\n") != -1:
-            response = response.replace("\n", " ")
+        if format_option is True:
+            # 去除换行
+            while response.find("\n") != -1:
+                response = response.replace("\n", " ")
 
-        # 句号换成逗号
-        while response.find(".") != -1:
-            response = response.replace(".", ",")
+            # 句号换成逗号
+            while response.find(".") != -1:
+                response = response.replace(".", ",")
 
-        # 去除多余逗号
-        while response.find(",,") != -1:
-            response = response.replace(",,", ",")
-        while response.find(", ,") != -1:
-            response = response.replace(", ,", ",")
+            # 去除多余逗号
+            while response.find(",,") != -1:
+                response = response.replace(",,", ",")
+            while response.find(", ,") != -1:
+                response = response.replace(", ,", ",")
 
         if translate_option is True:
             response = mz_prompt_utils.Utils.prompt_zh_to_en(response)

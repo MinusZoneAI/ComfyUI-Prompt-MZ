@@ -235,9 +235,10 @@ class MZ_LLamaCPPCLIPTextEncode:
             "required": {
                 "style_presets": (style_presets, {"default": style_presets[1]}),
                 "text": ("STRING", {"multiline": True}),
-                "translate": ([False, True], {"default": False}),
                 "keep_device": ([False, True], {"default": False}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
+                "translate": ([False, True], {"default": False}),
+                "format": ([False, True], {"default": True}),
             },
             "optional": {
                 "clip": ("CLIP",),
