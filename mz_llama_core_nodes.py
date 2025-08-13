@@ -87,6 +87,7 @@ def llama_cpp_node_encode(args_dict):
     options = args_dict.get("llama_cpp_options", {})
     keep_device = args_dict.get("keep_device", False)
     seed = args_dict.get("seed", -1)
+    translate_option = args_dict.get("translate", False)
     options["seed"] = seed
     options["chat_format"] = chat_format
 
@@ -214,7 +215,8 @@ def llama_cpp_node_encode(args_dict):
         while response.find(", ,") != -1:
             response = response.replace(", ,", ",")
 
-        response = mz_prompt_utils.Utils.prompt_zh_to_en(response)
+        if translate_option is True:
+            response = mz_prompt_utils.Utils.prompt_zh_to_en(response)
 
         style_presets_prompt_text = style_presets_prompt.get(style_presets, "")
 
@@ -231,7 +233,7 @@ def llama_cpp_node_encode(args_dict):
         conditionings = mz_prompt_utils.Utils.a1111_clip_text_encode(
             clip, response, )
 
-    return {"ui": {"string": [mz_prompt_utils.Utils.to_debug_prompt(response),]}, "result": (response, conditionings)}
+    return {"ui": {"string": [mz_prompt_utils.Utils.to_debug_prompt(response, translate_option),]}, "result": (response, conditionings)}
 
 
 def image_interrogator_captioner(args_dict):

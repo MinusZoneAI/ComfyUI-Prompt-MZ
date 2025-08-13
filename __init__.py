@@ -228,22 +228,24 @@ class MZ_LLamaCPPCLIPTextEncode:
     @classmethod
     def INPUT_TYPES(s):
         importlib.reload(mz_llama_cpp)
+        from . import mz_llama_core_nodes
+        style_presets = mz_llama_core_nodes.get_style_presets()
 
-        result = {
+        return {
             "required": {
+                "style_presets": (style_presets, {"default": style_presets[1]}),
+                "text": ("STRING", {"multiline": True}),
+                "translate": ([False, True], {"default": False}),
+                "keep_device": ([False, True], {"default": False}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 0xffffffffffffffff}),
             },
             "optional": {
+                "clip": ("CLIP",),
                 "llama_cpp_model": ("LLamaCPPModelConfig",),
+                "llama_cpp_options": ("LLamaCPPOptions",),
+                "customize_instruct": ("CustomizeInstruct",),
             },
         }
-
-        common_input = getCommonCLIPTextEncodeInput()
-        for key in common_input["required"]:
-            result["required"][key] = common_input["required"][key]
-        for key in common_input["optional"]:
-            result["optional"][key] = common_input["optional"][key]
-
-        return result
 
     RETURN_TYPES = ("STRING", "CONDITIONING",)
     RETURN_NAMES = ("text", "conditioning",)

@@ -736,21 +736,24 @@ class Utils:
 
         return Utils.en2zh(text)
 
-    def to_debug_prompt(p):
-        if p is None:
-            return ""
-        zh = Utils.en2zh(p)
-        if p == zh:
-            return p
-        zh = Utils.split_en_to_zh(p)
-        p = p.strip()
-        return f"""
+    def to_debug_prompt(p, z):
+        if z is True:
+            if p is None:
+                return ""
+            zh = Utils.en2zh(p)
+            if p == zh:
+                return p
+            zh = Utils.split_en_to_zh(p)
+            p = p.strip()
+            return f"""
 原文:
 {p}
 
 中文翻译:
 {zh}
 """
+        else:
+            return p
 
     def get_gguf_files():
         gguf_dir = Utils.get_gguf_models_path()
