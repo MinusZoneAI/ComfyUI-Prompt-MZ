@@ -87,6 +87,8 @@ def llama_cpp_node_encode(args_dict):
     options = args_dict.get("llama_cpp_options", {})
     keep_device = args_dict.get("keep_device", False)
     seed = args_dict.get("seed", -1)
+    translate_option = args_dict.get("translate", False)
+    format_option = args_dict.get("format", True)
     options["seed"] = seed
     options["chat_format"] = chat_format
 
@@ -200,21 +202,23 @@ def llama_cpp_node_encode(args_dict):
         if keep_device is False:
             mz_llama_cpp.freed_gpu_memory(model_file=model_file)
 
-        # 去除换行
-        while response.find("\n") != -1:
-            response = response.replace("\n", " ")
+        if format_option is True:
+            # 去除换行
+            while response.find("\n") != -1:
+                response = response.replace("\n", " ")
 
-        # 句号换成逗号
-        while response.find(".") != -1:
-            response = response.replace(".", ",")
+            # 句号换成逗号
+            while response.find(".") != -1:
+                response = response.replace(".", ",")
 
-        # 去除多余逗号
-        while response.find(",,") != -1:
-            response = response.replace(",,", ",")
-        while response.find(", ,") != -1:
-            response = response.replace(", ,", ",")
+            # 去除多余逗号
+            while response.find(",,") != -1:
+                response = response.replace(",,", ",")
+            while response.find(", ,") != -1:
+                response = response.replace(", ,", ",")
 
-        response = mz_prompt_utils.Utils.prompt_zh_to_en(response)
+        if translate_option is True:
+            response = mz_prompt_utils.Utils.prompt_zh_to_en(response)
 
         style_presets_prompt_text = style_presets_prompt.get(style_presets, "")
 
@@ -231,7 +235,7 @@ def llama_cpp_node_encode(args_dict):
         conditionings = mz_prompt_utils.Utils.a1111_clip_text_encode(
             clip, response, )
 
-    return {"ui": {"string": [mz_prompt_utils.Utils.to_debug_prompt(response),]}, "result": (response, conditionings)}
+    return {"ui": {"string": [mz_prompt_utils.Utils.to_debug_prompt(response, translate_option),]}, "result": (response, conditionings, response)}
 
 
 def image_interrogator_captioner(args_dict):

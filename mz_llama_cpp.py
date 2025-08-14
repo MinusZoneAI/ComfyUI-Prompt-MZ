@@ -12,106 +12,7 @@ try:
 except ImportError:
     pass
 
-
-def check_llama_cpp_requirements():
-    min_version = "0.2.63"
-    last_version = "0.2.76"
-    try:
-        from llama_cpp import Llama
-        import llama_cpp
-        if llama_cpp.__version__ < min_version:
-            raise ImportError("llama_cpp version is too low. (llama_cpp版本过低)")
-    except ImportError:
-        py_version = ""
-        if sys.version_info.major == 3:
-            if sys.version_info.minor == 10:
-                py_version = "310"
-            elif sys.version_info.minor == 11:
-                py_version = "311"
-            elif sys.version_info.minor == 12:
-                py_version = "312"
-
-        if py_version == "":
-            raise ValueError(
-                f"Please upgrade python to version 3.10 or above. (找不到对应的python版本) 当前版本:{sys.version_info.major}.{sys.version_info.minor}")
-
-        cuda_version = ""
-        if torch.cuda.is_available():
-            cuda_version = "cu" + torch.version.cuda.replace(".", "")
-            if cuda_version not in ["cu121", "cu122", "cu123"]:
-                cuda_version = "cu121"
-                print(
-                    f"Warning: The current version of cuda is not supported. (警告: 当前cuda版本不支持) {torch.version.cuda} (默认使用cu121)")
-        else:
-            cuda_version = "cpu"
-
-        # https://github.com/abetlen/llama-cpp-python/releases/download/v0.2.63-cu123/llama_cpp_python-0.2.63-cp310-cp310-linux_x86_64.whl
-
-        system_name = "linux_x86_64"
-        if sys.platform == "linux":
-            if sys.maxsize > 2**32:
-                system_name = "linux_x86_64"
-            else:
-                system_name = "linux_i686"
-        elif sys.platform == "darwin":
-            # 请手动前往https://github.com/abetlen/llama-cpp-python/releases 下载对应的whl文件后 使用pip install {whl文件路径}安装
-            raise ValueError(
-                "Please download the corresponding whl file from https://github.com/abetlen/llama-cpp-python/releases and install it using pip install {whl file path} (请手动前往https://github.com/abetlen/llama-cpp-python/releases 下载对应的whl文件后 使用pip install {whl文件路径}安装)")
-        elif sys.platform == "win32":
-            system_name = "win_amd64"
-        else:
-            raise ValueError(
-                f"Unsupported platform. (不支持的平台) {sys.platform} (请手动前往https://github.com/abetlen/llama-cpp-python/releases 下载对应的whl文件后 使用pip install 'whl文件路径' 安装)")
-
-        wheel_name = f"llama_cpp_python-{last_version}-cp{py_version}-cp{py_version}-{system_name}.whl"
-        if cuda_version == "cpu":
-            wheel_url = f"https://github.com/abetlen/llama-cpp-python/releases/download/v{last_version}/{wheel_name}"
-        else:
-            wheel_url = f"https://github.com/abetlen/llama-cpp-python/releases/download/v{last_version}-{cuda_version}/{wheel_name}"
-
-        print(f"pip install {wheel_url}")
-        modelscope_url = f"https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llama-cpp-python-win%2F{cuda_version}%2F{wheel_name}"
-        if mz_prompt_utils.Utils.testDownloadSpeed(wheel_url):
-            ret = subprocess.run([
-                sys.executable, "-m",
-                "pip", "install", wheel_url], check=True)
-        elif mz_prompt_utils.Utils.testDownloadSpeed(modelscope_url):
-            import tempfile
-            whl_download_file = os.path.join(
-                tempfile.gettempdir(), wheel_name)
-            mz_prompt_utils.Utils.download_file(
-                modelscope_url, whl_download_file)
-            print(f"pip install {whl_download_file}")
-            ret = subprocess.run([
-                sys.executable, "-m",
-                "pip", "install", whl_download_file], check=True)
-        else:
-
-            # 兜底方案
-            modelscope_url = f"https://www.modelscope.cn/api/v1/models/wailovet/MinusZoneAIModels/repo?Revision=master&FilePath=llama-cpp-python-win%2Fcu121%2Fllama_cpp_python-0.2.76-cp310-cp310-win_amd64.whl"
-            if py_version == "310" and system_name == "win_amd64" and mz_prompt_utils.Utils.testDownloadSpeed(modelscope_url):
-                import tempfile
-                whl_download_file = os.path.join(
-                    tempfile.gettempdir(), wheel_name)
-                mz_prompt_utils.Utils.download_file(
-                    modelscope_url, whl_download_file)
-                print(f"pip install {whl_download_file}")
-                ret = subprocess.run([
-                    sys.executable, "-m",
-                    "pip", "install", whl_download_file], check=True)
-            else:
-                ret = subprocess.run([
-                    sys.executable, "-m",
-                    "pip", "install", wheel_url], check=True)
-
-        if ret.returncode != 0:
-            raise ValueError("Failed to install llama_cpp. (安装llama_cpp失败)")
-        else:
-            print("llama_cpp installed successfully. (llama_cpp安装成功)")
-
-
 def get_llama_cpp_chat_handlers():
-    check_llama_cpp_requirements()
     from llama_cpp import llama_chat_format
     chat_handlers = llama_chat_format.LlamaChatCompletionHandlerRegistry()._chat_handlers
     chat_handlers = list(chat_handlers.keys())
@@ -148,7 +49,6 @@ def LlamaCppOptions():
 
 
 def freed_gpu_memory(model_file):
-    check_llama_cpp_requirements()
 
     model_and_opt = mz_prompt_utils.Utils.cache_get(
         f"llama_cpp_model_and_opt_{model_file}")
@@ -171,8 +71,6 @@ def llama_cpp_messages(model_file, mmproj_file=None, messages=[], options={}):
     options = options.copy()
     print(f"Find local model file: {model_file}")
     init_opts = ["n_ctx", "logits_all", "chat_format", "n_gpu_layers"]
-
-    check_llama_cpp_requirements()
 
     from llama_cpp import Llama
     import llama_cpp
@@ -435,7 +333,6 @@ def llava_cpp_simple_interrogator(
     if options is None:
         options = {}
     options = options.copy()
-    check_llama_cpp_requirements()
 
     content = []
     if image is not None:
@@ -443,8 +340,6 @@ def llava_cpp_simple_interrogator(
         content.append({"type": "image_url", "image_url": {"url": data_uri}})
 
     content.append({"type": "text", "text": question})
-
-    check_llama_cpp_requirements()
 
     return llava_cpp_messages(model_file, mmproj_file, [
         {

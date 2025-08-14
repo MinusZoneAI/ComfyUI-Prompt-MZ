@@ -1,0 +1,2 @@
+diskcache
+llama-cpp-python
